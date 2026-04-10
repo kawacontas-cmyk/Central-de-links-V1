@@ -198,6 +198,21 @@
   .section-header { cursor: pointer; user-select: none; }
   .section-header:hover .section-name { color: var(--text); }
 
+  .drag-handle {
+    display: flex; align-items: center;
+    padding: 2px 4px 2px 0;
+    cursor: grab;
+    color: var(--text-hint);
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle svg { width: 14px; height: 14px; }
+  .section:hover .drag-handle { opacity: 1; }
+  .section.dragging { opacity: 0.35; }
+  .section.drag-over > .section-header { outline: 2px solid #CDA04C; border-radius: 8px; }
+
   .chevron {
     width: 16px; height: 16px;
     color: var(--text-hint);
@@ -272,6 +287,116 @@
     text-overflow: ellipsis;
   }
 
+  .card-wrap { position: relative; }
+  .card-wrap:hover .edit-btn { opacity: 1; }
+  .card-wrap:hover .del-btn  { opacity: 1; }
+
+  .edit-btn, .del-btn {
+    position: absolute;
+    top: 8px;
+    opacity: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 2;
+  }
+  .edit-btn { right: 8px; }
+  .del-btn  { right: 38px; }
+  .edit-btn:hover { background: var(--surface2); }
+  .del-btn:hover  { background: #2a0a0a; border-color: #7a1a1a; }
+  .del-btn:hover svg { color: #f07a7a; }
+  .edit-btn svg, .del-btn svg { width: 13px; height: 13px; color: var(--text-muted); }
+
+  .type-dropdown {
+    position: absolute;
+    top: 34px; right: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-hover);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 10;
+    min-width: 130px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: none;
+  }
+  .type-dropdown.open { display: block; }
+  .type-opt {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: background 0.12s;
+  }
+  .type-opt:hover { background: var(--surface2); color: var(--text); }
+  .type-opt.active { color: var(--text); font-weight: 500; }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px;
+    padding: 7px 12px;
+    border: 1px dashed var(--border-hover);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-hint);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    width: fit-content;
+  }
+  .add-btn:hover { border-color: #CDA04C; color: #CDA04C; background: rgba(205,160,76,0.06); }
+  .add-btn svg { width: 14px; height: 14px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-hover);
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  }
+  .modal h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+  .modal label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; margin-top: 12px; }
+  .modal input, .modal select {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+  }
+  .modal input:focus, .modal select:focus { border-color: #CDA04C; }
+  .modal select option { background: #0e1530; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; justify-content: flex-end; }
+  .btn-cancel {
+    padding: 7px 16px; border-radius: 7px; font-size: 13px; cursor: pointer;
+    background: transparent; border: 1px solid var(--border-hover); color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-cancel:hover { background: var(--surface2); }
+  .btn-confirm {
+    padding: 7px 16px; border-radius: 7px; font-size: 13px; cursor: pointer;
+    background: #CDA04C; border: 1px solid #CDA04C; color: #060B1F; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-confirm:hover { background: #e0b45a; }
+
   .empty {
     color: var(--text-muted);
     font-size: 14px;
@@ -294,7 +419,7 @@
 <header>
   <div class="header-inner">
     <div class="logo-wrap">
-      <img src="INDICADORES.png" alt="Instituto Kaleizu" style="height:56px;width:auto;display:block;" />
+      <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" style="height:56px;width:auto;display:block;" />
       <span class="logo-sep"></span>
       <span class="logo-title">Central de Links</span>
     </div>
@@ -322,6 +447,31 @@
   </aside>
 
   <div class="content" id="content"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modal-title">Adicionar link</h3>
+    <label>Nome da página</label>
+    <input type="text" id="modal-label" placeholder="Ex: [L5] PG CAP v5" />
+    <label>URL completa</label>
+    <input type="text" id="modal-url" placeholder="https://kaleizurosa.com/..." />
+    <label>Tipo</label>
+    <select id="modal-tipo">
+      <option value="cap">Captura</option>
+      <option value="obg">Obrigado</option>
+      <option value="vnd">Vendas</option>
+      <option value="pesq">Pesquisa</option>
+      <option value="aula">Aula</option>
+      <option value="outro">Outros</option>
+    </select>
+    <label>Grupo</label>
+    <select id="modal-grupo"></select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmAdd()">Adicionar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -440,8 +590,107 @@ const tipoInfo = {
 };
 
 const allGroups = [...new Set(links.map(l => l.grupo))];
+let groupOrder = [...allGroups];
 let activeGrupo = "Todos";
 const collapsedGroups = new Set(allGroups);
+const customTypes = {};
+const deletedLinks = new Set();
+const addedLinks = [];
+
+let dragSrc = null;
+
+function onDragStart(e, grupo) {
+  dragSrc = grupo;
+  e.dataTransfer.effectAllowed = "move";
+  setTimeout(() => {
+    const el = document.getElementById("sec-" + grupo.replace(/\s+/g,"_"));
+    if (el) el.classList.add("dragging");
+  }, 0);
+}
+
+function onDragOver(e, grupo) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".section.drag-over").forEach(el => el.classList.remove("drag-over"));
+  const el = document.getElementById("sec-" + grupo.replace(/\s+/g,"_"));
+  if (el && grupo !== dragSrc) el.classList.add("drag-over");
+}
+
+function onDrop(e, grupo) {
+  e.preventDefault();
+  if (!dragSrc || dragSrc === grupo) return;
+  const from = groupOrder.indexOf(dragSrc);
+  const to   = groupOrder.indexOf(grupo);
+  if (from === -1 || to === -1) return;
+  groupOrder.splice(from, 1);
+  groupOrder.splice(to, 0, dragSrc);
+  dragSrc = null;
+  document.querySelectorAll(".section.drag-over, .section.dragging").forEach(el => {
+    el.classList.remove("drag-over", "dragging");
+  });
+  render();
+}
+
+function onDragEnd() {
+  dragSrc = null;
+  document.querySelectorAll(".section.drag-over, .section.dragging").forEach(el => {
+    el.classList.remove("drag-over", "dragging");
+  });
+}
+
+function deleteLink(url) {
+  deletedLinks.add(url);
+  render();
+}
+
+function openAddModal(grupo) {
+  const sel = document.getElementById("modal-grupo");
+  const grupos = [...new Set(links.map(l => l.grupo))].concat(addedLinks.map(l => l.grupo));
+  const uniq = [...new Set(grupos)];
+  sel.innerHTML = uniq.map(g => `<option value="${g}"${g===grupo?" selected":""}>${g}</option>`).join("");
+  document.getElementById("modal-label").value = "";
+  document.getElementById("modal-url").value = "";
+  document.getElementById("modal-tipo").value = "cap";
+  document.getElementById("modal-overlay").classList.add("open");
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById("modal-overlay")) {
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+}
+
+function confirmAdd() {
+  const label = document.getElementById("modal-label").value.trim();
+  const url   = document.getElementById("modal-url").value.trim();
+  const tipo  = document.getElementById("modal-tipo").value;
+  const grupo = document.getElementById("modal-grupo").value;
+  if (!label || !url) { alert("Preencha nome e URL."); return; }
+  addedLinks.push({label, url, grupo, tipo});
+  document.getElementById("modal-overlay").classList.remove("open");
+  render();
+}
+
+function setType(url, tipo) {
+  customTypes[url] = tipo;
+  closeAllDropdowns();
+  render();
+}
+
+function toggleDropdown(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dd = document.getElementById(id);
+  const isOpen = dd.classList.contains("open");
+  closeAllDropdowns();
+  if (!isOpen) dd.classList.add("open");
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll(".type-dropdown.open").forEach(d => d.classList.remove("open"));
+}
+
+document.addEventListener("click", closeAllDropdowns);
 
 function toggleSection(grupo, id) {
   const el = document.getElementById(id);
@@ -460,7 +709,7 @@ function renderNav(filtered) {
   filtered.forEach(l => { counts[l.grupo] = (counts[l.grupo] || 0) + 1; });
   const total = filtered.length;
   const nav = document.getElementById("nav");
-  const grupos = ["Todos", ...allGroups];
+  const grupos = ["Todos", ...groupOrder];
   nav.innerHTML = grupos.map(g => {
     const n = g === "Todos" ? total : (counts[g] || 0);
     if (g !== "Todos" && n === 0) return "";
@@ -480,7 +729,8 @@ function setGrupo(g) {
 
 function render() {
   const q = document.getElementById("search").value.toLowerCase();
-  const allFiltered = links.filter(l =>
+  const allLinks = [...links, ...addedLinks].filter(l => !deletedLinks.has(l.url));
+  const allFiltered = allLinks.filter(l =>
     !q || l.label.toLowerCase().includes(q) || l.url.toLowerCase().includes(q)
   );
   const filtered = allFiltered.filter(l =>
@@ -490,11 +740,14 @@ function render() {
   renderNav(allFiltered);
   document.getElementById("count").textContent = filtered.length + " links";
 
-  const byGroup = {};
+  const byGroupMap = {};
   filtered.forEach(l => {
-    if (!byGroup[l.grupo]) byGroup[l.grupo] = [];
-    byGroup[l.grupo].push(l);
+    if (!byGroupMap[l.grupo]) byGroupMap[l.grupo] = [];
+    byGroupMap[l.grupo].push(l);
   });
+  const byGroup = groupOrder
+    .filter(g => byGroupMap[g])
+    .map(g => [g, byGroupMap[g]]);
 
   const content = document.getElementById("content");
   if (!filtered.length) {
@@ -502,28 +755,63 @@ function render() {
     return;
   }
 
-  content.innerHTML = Object.entries(byGroup).map(([grupo, items]) => {
+  content.innerHTML = byGroup.map(([grupo, items]) => {
     const id = "sec-" + grupo.replace(/\s+/g,"_");
     const isCollapsed = collapsedGroups.has(grupo);
-    return `
-    <div class="section${isCollapsed?" collapsed":""}" id="${id}">
-      <div class="section-header" onclick="toggleSection('${grupo.replace(/'/g,"&#39;")}','${id}')">
-        <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
-        <span class="section-name">${grupo}</span>
-        <span class="section-line"></span>
-        <span class="section-total">${items.length}</span>
-      </div>
-      <div class="grid-wrap"><div class="grid">${items.map(l => {
-        const t = tipoInfo[l.tipo];
-        const slug = l.url.replace("https://kaleizurosa.com","") || "/";
-        return `<a class="card" href="${l.url}" target="_blank" rel="noopener">
+    const gEsc = grupo.replace(/'/g,"&#39;");
+    const cards = items.map((l, i) => {
+      const tipo = customTypes[l.url] || l.tipo;
+      const t = tipoInfo[tipo];
+      const slug = l.url.replace("https://kaleizurosa.com","") || "/";
+      const ddId = "dd-" + grupo.replace(/\s+/g,"_") + "-" + i;
+      const opts = Object.entries(tipoInfo).map(([k, v]) =>
+        `<div class="type-opt${tipo===k?" active":""}" onclick="setType('${l.url}','${k}')">
+          <span class="badge ${v.cls}" style="pointer-events:none">${v.label}</span>
+        </div>`
+      ).join("");
+      return `<div class="card-wrap">
+        <a class="card" href="${l.url}" target="_blank" rel="noopener">
           <div class="card-top">
             <span class="badge ${t.cls}">${t.label}</span>
             <span class="card-label" title="${l.label}">${l.label}</span>
           </div>
           <span class="card-url">${slug}</span>
-        </a>`;
-      }).join("")}</div></div>
+        </a>
+        <div class="del-btn" onclick="deleteLink('${l.url}')" title="Excluir">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,4 13,4"/><path d="M5 4V3h6v1M6 7v5M10 7v5"/><rect x="3" y="4" width="10" height="9" rx="1"/></svg>
+        </div>
+        <div class="edit-btn" onclick="toggleDropdown(event,'${ddId}')" title="Alterar tipo">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
+        </div>
+        <div class="type-dropdown" id="${ddId}">${opts}</div>
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="section${isCollapsed?" collapsed":""}" id="${id}"
+      draggable="false"
+      ondragover="onDragOver(event,'${gEsc}')"
+      ondrop="onDrop(event,'${gEsc}')"
+      ondragend="onDragEnd()">
+      <div class="section-header" onclick="toggleSection('${gEsc}','${id}')">
+        <div class="drag-handle" draggable="true"
+          ondragstart="onDragStart(event,'${gEsc}')"
+          onclick="event.stopPropagation()"
+          title="Arrastar para reordenar">
+          <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="4" r="1.2"/><circle cx="5.5" cy="8" r="1.2"/><circle cx="5.5" cy="12" r="1.2"/><circle cx="10.5" cy="4" r="1.2"/><circle cx="10.5" cy="8" r="1.2"/><circle cx="10.5" cy="12" r="1.2"/></svg>
+        </div>
+        <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
+        <span class="section-name">${grupo}</span>
+        <span class="section-line"></span>
+        <span class="section-total">${items.length}</span>
+      </div>
+      <div class="grid-wrap">
+        <div class="grid">${cards}</div>
+        <div class="add-btn" onclick="openAddModal('${gEsc}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+          Adicionar link
+        </div>
+      </div>
     </div>`;
   }).join("");
 }
