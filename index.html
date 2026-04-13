@@ -750,15 +750,23 @@ let dragSrc = null;
 // ── SUPABASE CRUD ──────────────────────────────────────
 async function loadData() {
   showLoading(true);
-  const { data: dbLinks } = await sb.from("links").select("*").eq("deleted", false).order("created_at");
+
+  const { data: dbLinks, error } = await sb.from("links").select("*").eq("deleted", false).order("created_at");
   const { data: dbOrder } = await sb.from("grupo_order").select("*").order("position");
+
+  if (error) {
+    document.getElementById("content").innerHTML = '<p class="empty">Erro ao carregar dados.</p>';
+    return;
+  }
 
   if (!dbLinks || dbLinks.length === 0) {
     await seedInitialData();
-    return loadData();
+    await loadData();
+    return;
   }
 
   links = dbLinks.map(r => ({ id: r.id, label: r.label, url: r.url, grupo: r.grupo, tipo: r.tipo }));
+
   const allG = [...new Set(links.map(l => l.grupo))];
   if (dbOrder && dbOrder.length > 0) {
     const ordered = dbOrder.map(r => r.grupo).filter(g => allG.includes(g));
@@ -767,7 +775,10 @@ async function loadData() {
   } else {
     groupOrder = allG;
   }
+
+  collapsedGroups.clear();
   groupOrder.forEach(g => collapsedGroups.add(g));
+
   showLoading(false);
   render();
 }
@@ -818,8 +829,12 @@ async function setType(id, url, tipo) {
 
 // ── UI HELPERS ─────────────────────────────────────────
 function showLoading(on) {
-  document.getElementById("content").innerHTML = on
-    ? '<p class="empty">Carregando...</p>' : '';
+  const content = document.getElementById("content");
+  const nav = document.getElementById("nav");
+  if (on) {
+    content.innerHTML = '<p class="empty" style="padding-top:3rem;">Carregando...</p>';
+    if (nav) nav.innerHTML = "";
+  }
 }
 
 function openAddModal(grupo) {
