@@ -784,11 +784,25 @@ async function loadData() {
 }
 
 async function seedInitialData() {
-  const rows = INITIAL_LINKS.map((l, i) => ({ ...l, grupo_order: i, deleted: false }));
-  await sb.from("links").upsert(rows, { onConflict: "url" });
+  const rows = INITIAL_LINKS.map(l => ({
+    label: l.label,
+    url: l.url,
+    grupo: l.grupo,
+    tipo: l.tipo,
+    deleted: false
+  }));
+
+  // Insere em lotes de 20 para evitar erros
+  for (let i = 0; i < rows.length; i += 20) {
+    const batch = rows.slice(i, i + 20);
+    const { error } = await sb.from("links").upsert(batch, { onConflict: "url" });
+    if (error) console.error("Erro ao inserir lote:", error.message);
+  }
+
   const allG = [...new Set(INITIAL_LINKS.map(l => l.grupo))];
   const orderRows = allG.map((g, i) => ({ grupo: g, position: i }));
-  await sb.from("grupo_order").upsert(orderRows, { onConflict: "grupo" });
+  const { error: oErr } = await sb.from("grupo_order").upsert(orderRows, { onConflict: "grupo" });
+  if (oErr) console.error("Erro ao salvar ordem:", oErr.message);
 }
 
 async function saveGroupOrder() {
