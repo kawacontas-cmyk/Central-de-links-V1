@@ -36,6 +36,86 @@
     min-height: 100vh;
   }
 
+  /* Login */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .login-box {
+    width: 100%;
+    max-width: 360px;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .login-logo img { height: 52px; mix-blend-mode: lighten; }
+  .login-logo span {
+    font-size: 17px;
+    font-weight: 600;
+    color: #CDA04C;
+  }
+  .login-box h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .login-box p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 1.75rem;
+  }
+  .login-field { margin-bottom: 1rem; }
+  .login-field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .login-field input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .login-field input:focus { border-color: #CDA04C; }
+  .login-error {
+    font-size: 13px;
+    color: #f07a7a;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .login-error.show { display: block; }
+  .btn-login {
+    width: 100%;
+    padding: 11px;
+    background: #CDA04C;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #060B1F;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+    margin-top: 0.5rem;
+  }
+  .btn-login:hover { background: #e0b45a; }
+
+  #app { display: none; }
+
   header {
     background: #060B1F;
     border-bottom: 1px solid var(--border);
@@ -416,6 +496,28 @@
 </head>
 <body>
 
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" />
+      <span>Central de Links</span>
+    </div>
+    <h2>Bem-vindo de volta</h2>
+    <p>Faça login para acessar o painel</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-user" placeholder="Digite seu email" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="app">
 <header>
   <div class="header-inner">
     <div class="logo-wrap">
@@ -428,6 +530,7 @@
       <input type="text" id="search" placeholder="Buscar link..." oninput="render()" />
     </div>
     <span class="count-badge" id="count"></span>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif;" title="Sair">Sair</button>
   </div>
 </header>
 
@@ -474,8 +577,408 @@
   </div>
 </div>
 
+</div><!-- /app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const links = [
+const SUPABASE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── LOGIN ──────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById("login-user").value.trim();
+  const pass  = document.getElementById("login-pass").value;
+  const err   = document.getElementById("login-error");
+  const btn   = document.querySelector(".btn-login");
+  btn.textContent = "Entrando...";
+  btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.textContent = "Entrar";
+  btn.disabled = false;
+  if (error) {
+    err.textContent = "Email ou senha incorretos.";
+    err.classList.add("show");
+    document.getElementById("login-pass").value = "";
+    document.getElementById("login-pass").focus();
+  } else {
+    showApp();
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById("app").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("login-user").value = "";
+  document.getElementById("login-pass").value = "";
+}
+
+function showApp() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("login-error").classList.remove("show");
+  loadData();
+}
+
+// Verifica sessão ao carregar
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) showApp();
+});
+
+// ── DADOS ──────────────────────────────────────────────
+const INITIAL_LINKS = [
+  {label:"Central de links",url:"https://kaleizurosa.com/",grupo:"Geral",tipo:"outro"},
+  {label:"Sample Page",url:"https://kaleizurosa.com/sample-page/",grupo:"Geral",tipo:"outro"},
+  {label:"Tira Dúvidas – PG de Recebimento",url:"https://kaleizurosa.com/tira_duvidas/",grupo:"Geral",tipo:"outro"},
+  {label:"Envio de Dúvidas – PG de Recebimento",url:"https://kaleizurosa.com/envio-de-duvidas/",grupo:"Geral",tipo:"outro"},
+  {label:"Envio de Dúvidas – PG de Obrigado",url:"https://kaleizurosa.com/envio-de-duvidas-pg-de-obg/",grupo:"Geral",tipo:"outro"},
+  {label:"Página de verificação de números",url:"https://kaleizurosa.com/verificarnumero/",grupo:"Geral",tipo:"outro"},
+  {label:"Upsell TCV",url:"https://kaleizurosa.com/upsell-tcv/",grupo:"Geral",tipo:"outro"},
+  {label:"Matrículas Black Vitalícia",url:"https://kaleizurosa.com/matriculas-black-vitalicia/",grupo:"Black Friday",tipo:"outro"},
+  {label:"Página de vendas – Black",url:"https://kaleizurosa.com/black/",grupo:"Black Friday",tipo:"vnd"},
+  {label:"Página de Captura [Black Friday]",url:"https://kaleizurosa.com/blackfriday/",grupo:"Black Friday",tipo:"cap"},
+  {label:"PG OBG – Black Friday",url:"https://kaleizurosa.com/pg-obg-black-friday/",grupo:"Black Friday",tipo:"obg"},
+  {label:"PG Lista de Espera",url:"https://kaleizurosa.com/pg-lista-de-espera/",grupo:"Black Friday",tipo:"outro"},
+  {label:"PG OBG Lista de Espera",url:"https://kaleizurosa.com/pg-obg-lista-de-espera/",grupo:"Black Friday",tipo:"obg"},
+  {label:"PG de Obrigado",url:"https://kaleizurosa.com/pagina-de-obrigado/",grupo:"Geral",tipo:"obg"},
+  {label:"[L1] PG de OBG | Captura – WCVD",url:"https://kaleizurosa.com/l1-wcvd-pg-de-obg-captura/",grupo:"L1",tipo:"obg"},
+  {label:"[L1] Página de Captura v3 – WCVD",url:"https://kaleizurosa.com/l1-pagina-de-captura-v3-wcvd/",grupo:"L1",tipo:"cap"},
+  {label:"[L1] Página de Captura v2 – WCVD",url:"https://kaleizurosa.com/l1-pagina-de-captura-v2-wcvd/",grupo:"L1",tipo:"cap"},
+  {label:"[L1] Página de Captura v1 – WCVD",url:"https://kaleizurosa.com/l1-pagina-de-captura-v1-wcvd/",grupo:"L1",tipo:"cap"},
+  {label:"[L2] PG de OBG | Captura",url:"https://kaleizurosa.com/l2-pg-de-obg-captura/",grupo:"L2",tipo:"obg"},
+  {label:"[L2] Página de Captura v3",url:"https://kaleizurosa.com/l2-pagina-de-captura-v3/",grupo:"L2",tipo:"cap"},
+  {label:"[L2] Página de Captura v2",url:"https://kaleizurosa.com/l2-pagina-de-captura-v2/",grupo:"L2",tipo:"cap"},
+  {label:"[L2] Página de Captura v1",url:"https://kaleizurosa.com/l2-pagina-de-captura-v1/",grupo:"L2",tipo:"cap"},
+  {label:"[L3] Black | Aula 1",url:"https://kaleizurosa.com/l3-black-aula-1/",grupo:"L3",tipo:"aula"},
+  {label:"[L5] PG OBG 2 [Vendas]",url:"https://kaleizurosa.com/l5-obg-vendas/",grupo:"L5",tipo:"obg"},
+  {label:"[L5] PG OBG 2 [Pesquisa]",url:"https://kaleizurosa.com/pg-obs-pesquisa/",grupo:"L5",tipo:"pesq"},
+  {label:"[L5] PG OBG",url:"https://kaleizurosa.com/l5-pg-obg/",grupo:"L5",tipo:"obg"},
+  {label:"[L5] PG CAP 4",url:"https://kaleizurosa.com/l5-pg-cap-4/",grupo:"L5",tipo:"cap"},
+  {label:"[L5] PG CAP 3",url:"https://kaleizurosa.com/l5-pg-cap-3/",grupo:"L5",tipo:"cap"},
+  {label:"[L5] PG CAP 2",url:"https://kaleizurosa.com/l5-pg-cap-2/",grupo:"L5",tipo:"cap"},
+  {label:"[L5] PG CAP",url:"https://kaleizurosa.com/l5-pg-cap/",grupo:"L5",tipo:"cap"},
+  {label:"[L5] Página Vendas Pós [Oferta]",url:"https://kaleizurosa.com/oferta-l5-vendas/",grupo:"L5",tipo:"vnd"},
+  {label:"[L5] Página Vendas Pós (v2)",url:"https://kaleizurosa.com/l5-vendas-2/",grupo:"L5",tipo:"vnd"},
+  {label:"[L5] Página Vendas Pós",url:"https://kaleizurosa.com/l5-vendas/",grupo:"L5",tipo:"vnd"},
+  {label:"[L6] PG OBG [Pesquisa]",url:"https://kaleizurosa.com/l6-pg-obg-pesquisa/",grupo:"L6",tipo:"pesq"},
+  {label:"[L6] Página Vendas Pós",url:"https://kaleizurosa.com/l6-pagina-vendas-pos/",grupo:"L6",tipo:"vnd"},
+  {label:"[CAPTURA][L6KR] Aula de Pré Pós",url:"https://kaleizurosa.com/l6-captura/",grupo:"L6",tipo:"cap"},
+  {label:"[L7] PG OBG V2 [Pesquisa]",url:"https://kaleizurosa.com/l7-pg-obg-v2-pesquisa/",grupo:"L7",tipo:"pesq"},
+  {label:"[L7] PG OBG",url:"https://kaleizurosa.com/l7-pg-obg/",grupo:"L7",tipo:"obg"},
+  {label:"[PV Vendas] Pré-Venda Pós-Graduação 2",url:"https://kaleizurosa.com/pv-vendas-l7-2/",grupo:"L7",tipo:"vnd"},
+  {label:"[PV Vendas] Pré-Venda Pós-Graduação",url:"https://kaleizurosa.com/pv-vendas-l7/",grupo:"L7",tipo:"vnd"},
+  {label:"[Captura Grupo] Pré-Venda Pós-Graduação",url:"https://kaleizurosa.com/l7-capturavip/",grupo:"L7",tipo:"cap"},
+  {label:"[L8] PG OBG",url:"https://kaleizurosa.com/l8-pg-obg/",grupo:"L8",tipo:"obg"},
+  {label:"[L8] PG CAP",url:"https://kaleizurosa.com/l8-pg-cap/",grupo:"L8",tipo:"cap"},
+  {label:"[L11] PG OBG Antiga",url:"https://kaleizurosa.com/l11-pg-obg-antiga/",grupo:"L11",tipo:"obg"},
+  {label:"[L11] PG CAP Antiga",url:"https://kaleizurosa.com/l11-pg-cap-antiga/",grupo:"L11",tipo:"cap"},
+  {label:"[PV Vendas][L11] Pré-Venda Pós-Graduação Versão Final",url:"https://kaleizurosa.com/l11_pg_vendas/",grupo:"L11",tipo:"vnd"},
+  {label:"[L12] PG Vendas – Eletro sem Segredos",url:"https://kaleizurosa.com/pg-vendas-eletro/",grupo:"L12",tipo:"vnd"},
+  {label:"[L12] PG OBG Vendas – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-obg-alunos/",grupo:"L12",tipo:"obg"},
+  {label:"[L12] PG OBG – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-obg/",grupo:"L12",tipo:"obg"},
+  {label:"[L12] PG CAP v4 – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-cap-v4/",grupo:"L12",tipo:"cap"},
+  {label:"[L12] PG CAP v3 – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-cap-v3/",grupo:"L12",tipo:"cap"},
+  {label:"[L12] PG CAP v2 – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-cap-v2/",grupo:"L12",tipo:"cap"},
+  {label:"[L12] PG CAP – Eletro sem Segredos",url:"https://kaleizurosa.com/l12-pg-cap/",grupo:"L12",tipo:"cap"},
+  {label:"[L12] Pesquisa",url:"https://kaleizurosa.com/l12-pesquisa/",grupo:"L12",tipo:"pesq"},
+  {label:"[SS] PG Vendas – Eletro sem Segredos",url:"https://kaleizurosa.com/ss-inscricoes-eletro/",grupo:"L12",tipo:"vnd"},
+  {label:"[L13] Página de Obrigado",url:"https://kaleizurosa.com/l13-pg-obg/",grupo:"L13",tipo:"obg"},
+  {label:"[L13] Página de Captura",url:"https://kaleizurosa.com/l13-pg-cap/",grupo:"L13",tipo:"cap"},
+  {label:"[L13] Página com a Pesquisa",url:"https://kaleizurosa.com/l13-pesquisa-captacao/",grupo:"L13",tipo:"pesq"},
+  {label:"[L14] PG Pesquisa",url:"https://kaleizurosa.com/l14-pg-pesquisa/",grupo:"L14",tipo:"pesq"},
+  {label:"[L14] PG OBG",url:"https://kaleizurosa.com/l14-pg-obg/",grupo:"L14",tipo:"obg"},
+  {label:"[L14] PG de Vendas",url:"https://kaleizurosa.com/l14-matriculas/",grupo:"L14",tipo:"vnd"},
+  {label:"[L14] PG CAP",url:"https://kaleizurosa.com/l14-pg-cap/",grupo:"L14",tipo:"cap"},
+  {label:"[L15] PG Pesquisa",url:"https://kaleizurosa.com/l15-pesquisa/",grupo:"L15",tipo:"pesq"},
+  {label:"[L15] PG OBG",url:"https://kaleizurosa.com/l15-pg-obg/",grupo:"L15",tipo:"obg"},
+  {label:"[L15] PG CAP B",url:"https://kaleizurosa.com/l15-pg-cap-b/",grupo:"L15",tipo:"cap"},
+  {label:"[L15] PG CAP",url:"https://kaleizurosa.com/l15-pg-cap/",grupo:"L15",tipo:"cap"},
+  {label:"[L15] Página Vendas Pós",url:"https://kaleizurosa.com/matriculas_l15/",grupo:"L15",tipo:"vnd"},
+  {label:"[L16] PG Pesquisa",url:"https://kaleizurosa.com/l16-pesquisa/",grupo:"L16",tipo:"pesq"},
+  {label:"[L16] PG Palavra-Chave",url:"https://kaleizurosa.com/l16-palavra-chave/",grupo:"L16",tipo:"outro"},
+  {label:"[L16] PG OBG",url:"https://kaleizurosa.com/l16-pg-obg/",grupo:"L16",tipo:"obg"},
+  {label:"[L16] PG de Vendas",url:"https://kaleizurosa.com/l16-matriculas/",grupo:"L16",tipo:"vnd"},
+  {label:"[L16] PG CAP",url:"https://kaleizurosa.com/l16-pg-cap/",grupo:"L16",tipo:"cap"},
+  {label:"[L17] PG Pesquisa",url:"https://kaleizurosa.com/l17-pg-pesquisa/",grupo:"L17",tipo:"pesq"},
+  {label:"[L17] PG OBG",url:"https://kaleizurosa.com/l17-pg-obg/",grupo:"L17",tipo:"obg"},
+  {label:"[L17] PG CAP V2 Atualizada",url:"https://kaleizurosa.com/l17-pg-cap-v2/",grupo:"L17",tipo:"cap"},
+  {label:"[L17] PG CAP Atualizada",url:"https://kaleizurosa.com/l17-pg-cap-v1/",grupo:"L17",tipo:"cap"},
+  {label:"Auscultação Veterinária",url:"https://kaleizurosa.com/auscultacao-veterinaria/",grupo:"Auscultação",tipo:"outro"},
+  {label:"Auscultação – Pg Vendas SS",url:"https://kaleizurosa.com/auscultacao-ss/",grupo:"Auscultação",tipo:"vnd"},
+  {label:"Auscultação – Pg Vendas ORG",url:"https://kaleizurosa.com/auscultacao-pagina-de-vendas-org/",grupo:"Auscultação",tipo:"vnd"},
+  {label:"Auscultação – Pg Vendas",url:"https://kaleizurosa.com/auscultacao/",grupo:"Auscultação",tipo:"vnd"},
+  {label:"[CVCE] Funil Auscultação",url:"https://kaleizurosa.com/cvce-funil-auscultacao/",grupo:"Auscultação",tipo:"outro"},
+  {label:"Dispneia – Pg Vendas SS",url:"https://kaleizurosa.com/dispneia-ss/",grupo:"Dispneia",tipo:"vnd"},
+  {label:"Dispneia – Pg Vendas ORG",url:"https://kaleizurosa.com/dispneia-pagina-de-vendas-org/",grupo:"Dispneia",tipo:"vnd"},
+  {label:"Dispneia – Pg Vendas",url:"https://kaleizurosa.com/dispneia/",grupo:"Dispneia",tipo:"vnd"},
+  {label:"Dispneia em Cães & Gatos",url:"https://kaleizurosa.com/dispneia-em-caes-gatos/",grupo:"Dispneia",tipo:"outro"},
+  {label:"[ECV] Funil Dispneia",url:"https://kaleizurosa.com/ecv-funil-dispneia/",grupo:"Dispneia",tipo:"outro"},
+  {label:"Edema Pulmonar – Pg Vendas SS",url:"https://kaleizurosa.com/edema-ss/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar – Pg Vendas ORG",url:"https://kaleizurosa.com/edema-pulmonar-pagina-de-vendas-org/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar – Pg Vendas LATAM",url:"https://kaleizurosa.com/edema-pulmonar-pagina-de-vendas-latam/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar – Pg Vendas v3 [Nova]",url:"https://kaleizurosa.com/edemapulmonar-v3/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar – Pg Vendas v2",url:"https://kaleizurosa.com/edema2/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar – Pg Vendas",url:"https://kaleizurosa.com/edema/",grupo:"Edema Pulmonar",tipo:"vnd"},
+  {label:"Edema Pulmonar Cardiogênico",url:"https://kaleizurosa.com/edema-pulmonar-cardiogenico/",grupo:"Edema Pulmonar",tipo:"outro"},
+  {label:"[ECV] Funil Edema",url:"https://kaleizurosa.com/ecv-funil-edema/",grupo:"Edema Pulmonar",tipo:"outro"},
+  {label:"Hipertensão – Pg Vendas ORG",url:"https://kaleizurosa.com/hipertensao-pagina-de-vendas-org/",grupo:"Hipertensão",tipo:"vnd"},
+  {label:"Hipertensão – Pg Vendas",url:"https://kaleizurosa.com/hipertensao/",grupo:"Hipertensão",tipo:"vnd"},
+  {label:"[CVCE] Funil Hipertensão",url:"https://kaleizurosa.com/cvce-funil-hipertensao/",grupo:"Hipertensão",tipo:"outro"},
+  {label:"[Comercial] Página Vendas Pós",url:"https://kaleizurosa.com/pv-comercial/",grupo:"Comercial",tipo:"vnd"},
+  {label:"[Comercial] Página de Vendas | Clínica",url:"https://kaleizurosa.com/posclinica-comercial/",grupo:"Comercial",tipo:"vnd"},
+  {label:"[Comercial][OBG] Página Vendas Pós",url:"https://kaleizurosa.com/obg-comercial/",grupo:"Comercial",tipo:"obg"},
+  {label:"[Pós Clínica] PG para o Comercial",url:"https://kaleizurosa.com/pos-clinica-comercial/",grupo:"Comercial",tipo:"outro"},
+  {label:"[Pós Cardio] PG para o Comercial",url:"https://kaleizurosa.com/pos-cardio-comercial/",grupo:"Comercial",tipo:"outro"},
+];
+
+const tipoInfo = {
+  cap:  {label:"Captura",  cls:"badge-cap"},
+  obg:  {label:"Obrigado", cls:"badge-obg"},
+  vnd:  {label:"Vendas",   cls:"badge-vnd"},
+  pesq: {label:"Pesquisa", cls:"badge-pesq"},
+  aula: {label:"Aula",     cls:"badge-aula"},
+  outro:{label:"Outros",   cls:"badge-outro"},
+};
+
+let links = [];
+let groupOrder = [];
+let activeGrupo = "Todos";
+const collapsedGroups = new Set();
+let dragSrc = null;
+
+// ── SUPABASE CRUD ──────────────────────────────────────
+async function loadData() {
+  showLoading(true);
+  const { data: dbLinks } = await sb.from("links").select("*").eq("deleted", false).order("created_at");
+  const { data: dbOrder } = await sb.from("grupo_order").select("*").order("position");
+
+  if (!dbLinks || dbLinks.length === 0) {
+    await seedInitialData();
+    return loadData();
+  }
+
+  links = dbLinks.map(r => ({ id: r.id, label: r.label, url: r.url, grupo: r.grupo, tipo: r.tipo }));
+  const allG = [...new Set(links.map(l => l.grupo))];
+  if (dbOrder && dbOrder.length > 0) {
+    const ordered = dbOrder.map(r => r.grupo).filter(g => allG.includes(g));
+    const missing = allG.filter(g => !ordered.includes(g));
+    groupOrder = [...ordered, ...missing];
+  } else {
+    groupOrder = allG;
+  }
+  groupOrder.forEach(g => collapsedGroups.add(g));
+  showLoading(false);
+  render();
+}
+
+async function seedInitialData() {
+  const rows = INITIAL_LINKS.map((l, i) => ({ ...l, grupo_order: i, deleted: false }));
+  await sb.from("links").upsert(rows, { onConflict: "url" });
+  const allG = [...new Set(INITIAL_LINKS.map(l => l.grupo))];
+  const orderRows = allG.map((g, i) => ({ grupo: g, position: i }));
+  await sb.from("grupo_order").upsert(orderRows, { onConflict: "grupo" });
+}
+
+async function saveGroupOrder() {
+  const rows = groupOrder.map((g, i) => ({ grupo: g, position: i }));
+  await sb.from("grupo_order").upsert(rows, { onConflict: "grupo" });
+}
+
+async function deleteLink(id, url) {
+  await sb.from("links").update({ deleted: true }).eq("id", id);
+  links = links.filter(l => l.url !== url);
+  render();
+}
+
+async function confirmAdd() {
+  const label = document.getElementById("modal-label").value.trim();
+  const url   = document.getElementById("modal-url").value.trim();
+  const tipo  = document.getElementById("modal-tipo").value;
+  const grupo = document.getElementById("modal-grupo").value;
+  if (!label || !url) { alert("Preencha nome e URL."); return; }
+  const { data, error } = await sb.from("links").insert([{ label, url, grupo, tipo, deleted: false }]).select().single();
+  if (error) { alert("Erro ao salvar: " + error.message); return; }
+  links.push({ id: data.id, label, url, grupo, tipo });
+  if (!groupOrder.includes(grupo)) {
+    groupOrder.push(grupo);
+    await saveGroupOrder();
+  }
+  document.getElementById("modal-overlay").classList.remove("open");
+  render();
+}
+
+async function setType(id, url, tipo) {
+  await sb.from("links").update({ tipo }).eq("id", id);
+  const l = links.find(l => l.url === url);
+  if (l) l.tipo = tipo;
+  closeAllDropdowns();
+  render();
+}
+
+// ── UI HELPERS ─────────────────────────────────────────
+function showLoading(on) {
+  document.getElementById("content").innerHTML = on
+    ? '<p class="empty">Carregando...</p>' : '';
+}
+
+function openAddModal(grupo) {
+  const sel = document.getElementById("modal-grupo");
+  sel.innerHTML = groupOrder.map(g => `<option value="${g}"${g===grupo?" selected":""}>${g}</option>`).join("");
+  document.getElementById("modal-label").value = "";
+  document.getElementById("modal-url").value = "";
+  document.getElementById("modal-tipo").value = "cap";
+  document.getElementById("modal-overlay").classList.add("open");
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById("modal-overlay"))
+    document.getElementById("modal-overlay").classList.remove("open");
+}
+
+function toggleDropdown(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  const dd = document.getElementById(id);
+  const isOpen = dd.classList.contains("open");
+  closeAllDropdowns();
+  if (!isOpen) dd.classList.add("open");
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll(".type-dropdown.open").forEach(d => d.classList.remove("open"));
+}
+document.addEventListener("click", closeAllDropdowns);
+
+function toggleSection(grupo, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (collapsedGroups.has(grupo)) { collapsedGroups.delete(grupo); el.classList.remove("collapsed"); }
+  else { collapsedGroups.add(grupo); el.classList.add("collapsed"); }
+}
+
+// ── DRAG & DROP ────────────────────────────────────────
+function onDragStart(e, grupo) {
+  dragSrc = grupo;
+  e.dataTransfer.effectAllowed = "move";
+  setTimeout(() => {
+    const el = document.getElementById("sec-" + grupo.replace(/\s+/g,"_"));
+    if (el) el.classList.add("dragging");
+  }, 0);
+}
+function onDragOver(e, grupo) {
+  e.preventDefault();
+  document.querySelectorAll(".section.drag-over").forEach(el => el.classList.remove("drag-over"));
+  const el = document.getElementById("sec-" + grupo.replace(/\s+/g,"_"));
+  if (el && grupo !== dragSrc) el.classList.add("drag-over");
+}
+function onDrop(e, grupo) {
+  e.preventDefault();
+  if (!dragSrc || dragSrc === grupo) return;
+  const from = groupOrder.indexOf(dragSrc), to = groupOrder.indexOf(grupo);
+  if (from === -1 || to === -1) return;
+  groupOrder.splice(from, 1);
+  groupOrder.splice(to, 0, dragSrc);
+  dragSrc = null;
+  document.querySelectorAll(".section.drag-over, .section.dragging").forEach(el => el.classList.remove("drag-over","dragging"));
+  saveGroupOrder();
+  render();
+}
+function onDragEnd() {
+  dragSrc = null;
+  document.querySelectorAll(".section.drag-over, .section.dragging").forEach(el => el.classList.remove("drag-over","dragging"));
+}
+
+// ── NAV ────────────────────────────────────────────────
+function renderNav(filtered) {
+  const counts = {};
+  filtered.forEach(l => { counts[l.grupo] = (counts[l.grupo]||0)+1; });
+  const total = filtered.length;
+  const nav = document.getElementById("nav");
+  nav.innerHTML = ["Todos",...groupOrder].map(g => {
+    const n = g==="Todos" ? total : (counts[g]||0);
+    if (g!=="Todos" && n===0) return "";
+    return `<li class="nav-item${activeGrupo===g?" active":""}" onclick="setGrupo('${g.replace(/'/g,"&#39;")}')">${g}<span class="nav-count">${n}</span></li>`;
+  }).join("");
+}
+
+function setGrupo(g) {
+  activeGrupo = g;
+  if (g==="Todos") groupOrder.forEach(gr => collapsedGroups.add(gr));
+  else collapsedGroups.clear();
+  render();
+}
+
+// ── RENDER ─────────────────────────────────────────────
+function render() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const allFiltered = links.filter(l => !q || l.label.toLowerCase().includes(q) || l.url.toLowerCase().includes(q));
+  const filtered = allFiltered.filter(l => activeGrupo==="Todos" || l.grupo===activeGrupo);
+
+  renderNav(allFiltered);
+  document.getElementById("count").textContent = filtered.length + " links";
+
+  const byGroupMap = {};
+  filtered.forEach(l => { if (!byGroupMap[l.grupo]) byGroupMap[l.grupo]=[]; byGroupMap[l.grupo].push(l); });
+  const byGroup = groupOrder.filter(g => byGroupMap[g]).map(g => [g, byGroupMap[g]]);
+
+  const content = document.getElementById("content");
+  if (!filtered.length) { content.innerHTML = '<p class="empty">Nenhum link encontrado.</p>'; return; }
+
+  content.innerHTML = byGroup.map(([grupo, items]) => {
+    const id = "sec-" + grupo.replace(/\s+/g,"_");
+    const isCollapsed = collapsedGroups.has(grupo);
+    const gEsc = grupo.replace(/'/g,"&#39;");
+    const cards = items.map((l, i) => {
+      const t = tipoInfo[l.tipo] || tipoInfo.outro;
+      const slug = l.url.replace("https://kaleizurosa.com","") || "/";
+      const ddId = "dd-" + grupo.replace(/\s+/g,"_") + "-" + i;
+      const opts = Object.entries(tipoInfo).map(([k,v]) =>
+        `<div class="type-opt${l.tipo===k?" active":""}" onclick="setType('${l.id}','${l.url}','${k}')">
+          <span class="badge ${v.cls}" style="pointer-events:none">${v.label}</span>
+        </div>`).join("");
+      return `<div class="card-wrap">
+        <a class="card" href="${l.url}" target="_blank" rel="noopener">
+          <div class="card-top"><span class="badge ${t.cls}">${t.label}</span><span class="card-label" title="${l.label}">${l.label}</span></div>
+          <span class="card-url">${slug}</span>
+        </a>
+        <div class="del-btn" onclick="deleteLink('${l.id}','${l.url}')" title="Excluir">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,4 13,4"/><path d="M5 4V3h6v1M6 7v5M10 7v5"/><rect x="3" y="4" width="10" height="9" rx="1"/></svg>
+        </div>
+        <div class="edit-btn" onclick="toggleDropdown(event,'${ddId}')" title="Alterar tipo">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
+        </div>
+        <div class="type-dropdown" id="${ddId}">${opts}</div>
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="section${isCollapsed?" collapsed":""}" id="${id}"
+      draggable="false"
+      ondragover="onDragOver(event,'${gEsc}')"
+      ondrop="onDrop(event,'${gEsc}')"
+      ondragend="onDragEnd()">
+      <div class="section-header" onclick="toggleSection('${gEsc}','${id}')">
+        <div class="drag-handle" draggable="true" ondragstart="onDragStart(event,'${gEsc}')" onclick="event.stopPropagation()" title="Arrastar para reordenar">
+          <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="4" r="1.2"/><circle cx="5.5" cy="8" r="1.2"/><circle cx="5.5" cy="12" r="1.2"/><circle cx="10.5" cy="4" r="1.2"/><circle cx="10.5" cy="8" r="1.2"/><circle cx="10.5" cy="12" r="1.2"/></svg>
+        </div>
+        <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
+        <span class="section-name">${grupo}</span>
+        <span class="section-line"></span>
+        <span class="section-total">${items.length}</span>
+      </div>
+      <div class="grid-wrap">
+        <div class="grid">${cards}</div>
+        <div class="add-btn" onclick="openAddModal('${gEsc}')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+          Adicionar link
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
   {label:"Central de links",url:"https://kaleizurosa.com/",grupo:"Geral",tipo:"outro"},
   {label:"Sample Page",url:"https://kaleizurosa.com/sample-page/",grupo:"Geral",tipo:"outro"},
   {label:"Tira Dúvidas – PG de Recebimento",url:"https://kaleizurosa.com/tira_duvidas/",grupo:"Geral",tipo:"outro"},
