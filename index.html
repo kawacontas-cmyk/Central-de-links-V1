@@ -477,8 +477,123 @@
   }
   .btn-confirm:hover { background: #e0b45a; }
 
-  .empty {
-    color: var(--text-muted);
+  /* Admin Panel */
+  .admin-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #CDA04C;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .admin-btn:hover { background: rgba(205,160,76,0.08); border-color: #CDA04C; }
+  .admin-btn svg { width: 14px; height: 14px; }
+  .admin-btn.visible { display: flex; }
+
+  #admin-panel {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+  #admin-panel.open { display: flex; }
+
+  .admin-drawer {
+    background: var(--surface);
+    border-left: 1px solid var(--border-hover);
+    width: 100%; max-width: 520px;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+  .admin-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .admin-header h2 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .admin-close {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-muted);
+  }
+  .admin-close:hover { color: var(--text); }
+  .admin-close svg { width: 14px; height: 14px; }
+
+  .admin-section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--text-hint);
+    margin-bottom: 10px;
+  }
+
+  .user-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    flex-shrink: 0;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-email { font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-meta { font-size: 12px; color: var(--text-hint); margin-top: 2px; }
+
+  .role-select {
+    padding: 4px 8px; border-radius: 6px; font-size: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-family: 'DM Sans', sans-serif; cursor: pointer;
+  }
+  .role-select option { background: #0e1530; }
+
+  .user-del {
+    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
+    background: transparent; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-hint);
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .user-del:hover { background: #2a0a0a; border-color: #7a1a1a; color: #f07a7a; }
+  .user-del svg { width: 13px; height: 13px; }
+
+  .admin-form {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .admin-form label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; margin-top: 10px; }
+  .admin-form label:first-child { margin-top: 0; }
+  .admin-form input, .admin-form select {
+    width: 100%; padding: 8px 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; font-size: 13px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .admin-form input:focus, .admin-form select:focus { border-color: #CDA04C; }
+  .admin-form select option { background: #0e1530; }
+  .admin-msg { font-size: 13px; margin-top: 10px; padding: 8px 10px; border-radius: 7px; display: none; }
+  .admin-msg.ok  { display: block; background: var(--obg-bg); color: var(--obg-text); }
+  .admin-msg.err { display: block; background: #2a0a0a; color: #f07a7a; }
     font-size: 14px;
     padding: 3rem 0;
     text-align: center;
@@ -530,9 +645,48 @@
       <input type="text" id="search" placeholder="Buscar link..." oninput="render()" />
     </div>
     <span class="count-badge" id="count"></span>
-    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif;" title="Sair">Sair</button>
+    <button id="admin-btn" class="admin-btn" onclick="openAdminPanel()" title="Painel Admin">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="5" r="2.5"/><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5"/></svg>
+      Usuários
+    </button>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif;">Sair</button>
   </div>
 </header>
+
+<div id="admin-panel" onclick="closeAdminPanel(event)">
+  <div class="admin-drawer">
+    <div class="admin-header">
+      <h2>Painel Admin</h2>
+      <div class="admin-close" onclick="closeAdminPanel(null,true)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+      </div>
+    </div>
+
+    <div>
+      <p class="admin-section-title">Usuários cadastrados</p>
+      <div id="user-list"><p style="font-size:13px;color:var(--text-hint)">Carregando...</p></div>
+    </div>
+
+    <div>
+      <p class="admin-section-title">Adicionar novo usuário</p>
+      <div class="admin-form">
+        <label>Email</label>
+        <input type="email" id="new-email" placeholder="email@exemplo.com" />
+        <label>Senha</label>
+        <input type="password" id="new-pass" placeholder="Mínimo 6 caracteres" />
+        <label>Papel</label>
+        <select id="new-role">
+          <option value="member">Membro (só visualiza)</option>
+          <option value="admin">Admin (acesso total)</option>
+        </select>
+        <div style="margin-top:12px;">
+          <button class="btn-confirm" style="width:100%" onclick="createUser()">Criar usuário</button>
+        </div>
+        <div class="admin-msg" id="admin-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="main">
   <aside class="sidebar">
@@ -585,6 +739,75 @@ const SUPABASE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ── ADMIN PANEL ────────────────────────────────────────
+async function openAdminPanel() {
+  document.getElementById("admin-panel").classList.add("open");
+  await loadUsers();
+}
+
+function closeAdminPanel(e, force) {
+  if (force || (e && e.target === document.getElementById("admin-panel"))) {
+    document.getElementById("admin-panel").classList.remove("open");
+  }
+}
+
+async function loadUsers() {
+  const list = document.getElementById("user-list");
+  list.innerHTML = '<p style="font-size:13px;color:var(--text-hint)">Carregando...</p>';
+  const { users, error } = await callEdge({ action: "list" });
+  if (error) { list.innerHTML = `<p style="font-size:13px;color:#f07a7a">${error}</p>`; return; }
+
+  const { data: { user: me } } = await sb.auth.getUser();
+  list.innerHTML = users.map(u => {
+    const initials = u.email.slice(0,2).toUpperCase();
+    const lastLogin = u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString("pt-BR") : "Nunca";
+    const isMe = u.id === me.id;
+    return `<div class="user-row">
+      <div class="user-avatar">${initials}</div>
+      <div class="user-info">
+        <div class="user-email">${u.email}${isMe ? ' <span style="font-size:11px;color:var(--text-hint)">(você)</span>' : ""}</div>
+        <div class="user-meta">Último acesso: ${lastLogin}</div>
+      </div>
+      <select class="role-select" onchange="updateRole('${u.id}', this.value)">
+        <option value="admin"${u.role==="admin"?" selected":""}>Admin</option>
+        <option value="member"${u.role!=="admin"?" selected":""}>Membro</option>
+      </select>
+      ${!isMe ? `<div class="user-del" onclick="deleteUser('${u.id}')" title="Remover">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,4 13,4"/><path d="M5 4V3h6v1M6 7v5M10 7v5"/><rect x="3" y="4" width="10" height="9" rx="1"/></svg>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+async function createUser() {
+  const email = document.getElementById("new-email").value.trim();
+  const pass  = document.getElementById("new-pass").value;
+  const role  = document.getElementById("new-role").value;
+  const msg   = document.getElementById("admin-msg");
+  msg.className = "admin-msg";
+  if (!email || !pass) { msg.textContent = "Preencha email e senha."; msg.className = "admin-msg err"; return; }
+  if (pass.length < 6)  { msg.textContent = "Senha deve ter ao menos 6 caracteres."; msg.className = "admin-msg err"; return; }
+  const { error } = await callEdge({ action: "create", email, password: pass, role });
+  if (error) { msg.textContent = error; msg.className = "admin-msg err"; return; }
+  msg.textContent = "Usuário criado com sucesso!"; msg.className = "admin-msg ok";
+  document.getElementById("new-email").value = "";
+  document.getElementById("new-pass").value = "";
+  await loadUsers();
+}
+
+async function updateRole(userId, role) {
+  const { error } = await callEdge({ action: "update_role", userId, role });
+  if (error) alert("Erro ao atualizar papel: " + error);
+  else await loadUsers();
+}
+
+async function deleteUser(userId) {
+  if (!confirm("Remover este usuário? Esta ação não pode ser desfeita.")) return;
+  const { error } = await callEdge({ action: "delete", userId });
+  if (error) alert("Erro ao remover: " + error);
+  else await loadUsers();
+}
+
 // ── LOGIN ──────────────────────────────────────────────
 async function doLogin() {
   const email = document.getElementById("login-user").value.trim();
@@ -593,7 +816,7 @@ async function doLogin() {
   const btn   = document.querySelector(".btn-login");
   btn.textContent = "Entrando...";
   btn.disabled = true;
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   btn.textContent = "Entrar";
   btn.disabled = false;
   if (error) {
@@ -602,6 +825,7 @@ async function doLogin() {
     document.getElementById("login-pass").value = "";
     document.getElementById("login-pass").focus();
   } else {
+    isAdmin = data.user?.user_metadata?.role === "admin";
     showApp();
   }
 }
@@ -614,16 +838,35 @@ async function doLogout() {
   document.getElementById("login-pass").value = "";
 }
 
+let isAdmin = false;
+const EDGE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co/functions/v1/manage-users";
+
+async function callEdge(body) {
+  const { data: { session } } = await sb.auth.getSession();
+  const res = await fetch(EDGE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
 function showApp() {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app").style.display = "block";
   document.getElementById("login-error").classList.remove("show");
+  if (isAdmin) document.getElementById("admin-btn").classList.add("visible");
   loadData();
 }
 
-// Verifica sessão ao carregar
 sb.auth.getSession().then(({ data }) => {
-  if (data.session) showApp();
+  if (data.session) {
+    isAdmin = data.session.user?.user_metadata?.role === "admin";
+    showApp();
+  }
 });
 
 // ── DADOS ──────────────────────────────────────────────
@@ -965,18 +1208,22 @@ function render() {
         `<div class="type-opt${l.tipo===k?" active":""}" onclick="setType('${l.id}','${l.url}','${k}')">
           <span class="badge ${v.cls}" style="pointer-events:none">${v.label}</span>
         </div>`).join("");
+      const delBtn = isAdmin ? `
+        <div class="del-btn" onclick="deleteLink('${l.id}','${l.url}')" title="Excluir">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,4 13,4"/><path d="M5 4V3h6v1M6 7v5M10 7v5"/><rect x="3" y="4" width="10" height="9" rx="1"/></svg>
+        </div>` : "";
+      const editBtn = isAdmin ? `
+        <div class="edit-btn" onclick="toggleDropdown(event,'${ddId}')" title="Alterar tipo">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
+        </div>
+        <div class="type-dropdown" id="${ddId}">${opts}</div>` : "";
+
       return `<div class="card-wrap">
         <a class="card" href="${l.url}" target="_blank" rel="noopener">
           <div class="card-top"><span class="badge ${t.cls}">${t.label}</span><span class="card-label" title="${l.label}">${l.label}</span></div>
           <span class="card-url">${slug}</span>
         </a>
-        <div class="del-btn" onclick="deleteLink('${l.id}','${l.url}')" title="Excluir">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,4 13,4"/><path d="M5 4V3h6v1M6 7v5M10 7v5"/><rect x="3" y="4" width="10" height="9" rx="1"/></svg>
-        </div>
-        <div class="edit-btn" onclick="toggleDropdown(event,'${ddId}')" title="Alterar tipo">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
-        </div>
-        <div class="type-dropdown" id="${ddId}">${opts}</div>
+        ${delBtn}${editBtn}
       </div>`;
     }).join("");
 
@@ -987,9 +1234,9 @@ function render() {
       ondrop="onDrop(event,'${gEsc}')"
       ondragend="onDragEnd()">
       <div class="section-header" onclick="toggleSection('${gEsc}','${id}')">
-        <div class="drag-handle" draggable="true" ondragstart="onDragStart(event,'${gEsc}')" onclick="event.stopPropagation()" title="Arrastar para reordenar">
+        ${isAdmin ? `<div class="drag-handle" draggable="true" ondragstart="onDragStart(event,'${gEsc}')" onclick="event.stopPropagation()" title="Arrastar para reordenar">
           <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="5.5" cy="4" r="1.2"/><circle cx="5.5" cy="8" r="1.2"/><circle cx="5.5" cy="12" r="1.2"/><circle cx="10.5" cy="4" r="1.2"/><circle cx="10.5" cy="8" r="1.2"/><circle cx="10.5" cy="12" r="1.2"/></svg>
-        </div>
+        </div>` : ""}
         <svg class="chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
         <span class="section-name">${grupo}</span>
         <span class="section-line"></span>
@@ -997,10 +1244,10 @@ function render() {
       </div>
       <div class="grid-wrap">
         <div class="grid">${cards}</div>
-        <div class="add-btn" onclick="openAddModal('${gEsc}')">
+        ${isAdmin ? `<div class="add-btn" onclick="openAddModal('${gEsc}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
           Adicionar link
-        </div>
+        </div>` : ""}
       </div>
     </div>`;
   }).join("");
