@@ -738,6 +738,7 @@
 const SUPABASE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window._sb = sb;
 
 // ── ADMIN PANEL ────────────────────────────────────────
 async function openAdminPanel() {
