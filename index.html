@@ -743,6 +743,8 @@ window._sb = sb;
 // ── ADMIN PANEL ────────────────────────────────────────
 async function openAdminPanel() {
   document.getElementById("admin-panel").classList.add("open");
+  // Refresh session antes de carregar
+  await sb.auth.refreshSession();
   await loadUsers();
 }
 
