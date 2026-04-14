@@ -869,13 +869,20 @@ let isAdmin = false;
 const EDGE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co/functions/v1/manage-users";
 
 async function callEdge(body) {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) throw new Error("Sessão expirada. Faça login novamente.");
+  const { data: { session }, error: sessionError } = await sb.auth.getSession();
+  if (sessionError || !session) {
+    await doLogout();
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+  // Refresh token se estiver perto de expirar
+  const { data: refreshed } = await sb.auth.refreshSession();
+  const token = refreshed?.session?.access_token || session.access_token;
+
   const res = await fetch(EDGE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.access_token}`
+      "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(body)
   });
