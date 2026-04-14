@@ -754,11 +754,21 @@ function closeAdminPanel(e, force) {
 async function loadUsers() {
   const list = document.getElementById("user-list");
   list.innerHTML = '<p style="font-size:13px;color:var(--text-hint)">Carregando...</p>';
-  const { users, error } = await callEdge({ action: "list" });
-  if (error) { list.innerHTML = `<p style="font-size:13px;color:#f07a7a">${error}</p>`; return; }
+  let result;
+  try {
+    result = await callEdge({ action: "list" });
+  } catch(e) {
+    list.innerHTML = `<p style="font-size:13px;color:#f07a7a">Erro: ${e.message}</p>`;
+    return;
+  }
+  if (result.error) { list.innerHTML = `<p style="font-size:13px;color:#f07a7a">${result.error}</p>`; return; }
+  if (!result.users || !Array.isArray(result.users)) {
+    list.innerHTML = `<p style="font-size:13px;color:#f07a7a">Resposta inesperada: ${JSON.stringify(result)}</p>`;
+    return;
+  }
 
   const { data: { user: me } } = await sb.auth.getUser();
-  list.innerHTML = users.map(u => {
+  list.innerHTML = result.users.map(u => {
     const initials = u.email.slice(0,2).toUpperCase();
     const lastLogin = u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString("pt-BR") : "Nunca";
     const isMe = u.id === me.id;
@@ -860,6 +870,7 @@ const EDGE_URL = "https://iabugpuqlcfftwabuxsj.supabase.co/functions/v1/manage-u
 
 async function callEdge(body) {
   const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error("Sessão expirada. Faça login novamente.");
   const res = await fetch(EDGE_URL, {
     method: "POST",
     headers: {
@@ -868,7 +879,13 @@ async function callEdge(body) {
     },
     body: JSON.stringify(body)
   });
-  return res.json();
+  const text = await res.text();
+  if (!text) throw new Error("Resposta vazia da função (status " + res.status + ")");
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    throw new Error("Resposta inválida: " + text.slice(0, 100));
+  }
 }
 
 function showApp() {
