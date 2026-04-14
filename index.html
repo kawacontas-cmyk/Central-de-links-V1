@@ -784,15 +784,32 @@ async function createUser() {
   const pass  = document.getElementById("new-pass").value;
   const role  = document.getElementById("new-role").value;
   const msg   = document.getElementById("admin-msg");
+  const btn   = document.querySelector("#admin-panel .btn-confirm");
   msg.className = "admin-msg";
+
   if (!email || !pass) { msg.textContent = "Preencha email e senha."; msg.className = "admin-msg err"; return; }
   if (pass.length < 6)  { msg.textContent = "Senha deve ter ao menos 6 caracteres."; msg.className = "admin-msg err"; return; }
-  const { error } = await callEdge({ action: "create", email, password: pass, role });
-  if (error) { msg.textContent = error; msg.className = "admin-msg err"; return; }
-  msg.textContent = "Usuário criado com sucesso!"; msg.className = "admin-msg ok";
-  document.getElementById("new-email").value = "";
-  document.getElementById("new-pass").value = "";
-  await loadUsers();
+
+  btn.textContent = "Criando..."; btn.disabled = true;
+
+  try {
+    const result = await callEdge({ action: "create", email, password: pass, role });
+    if (result.error) {
+      msg.textContent = "Erro: " + result.error;
+      msg.className = "admin-msg err";
+    } else {
+      msg.textContent = "Usuário criado com sucesso!";
+      msg.className = "admin-msg ok";
+      document.getElementById("new-email").value = "";
+      document.getElementById("new-pass").value = "";
+      await loadUsers();
+    }
+  } catch(e) {
+    msg.textContent = "Erro de conexão: " + e.message;
+    msg.className = "admin-msg err";
+  }
+
+  btn.textContent = "Criar usuário"; btn.disabled = false;
 }
 
 async function updateRole(userId, role) {
