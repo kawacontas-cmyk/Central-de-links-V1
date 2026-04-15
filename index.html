@@ -477,7 +477,83 @@
   }
   .btn-confirm:hover { background: #e0b45a; }
 
-  /* Admin Panel */
+  /* App Selector */
+  #selector-screen {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  #selector-screen.active { display: flex; }
+
+  .selector-header {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 3rem;
+  }
+  .selector-header img { height: 64px; mix-blend-mode: lighten; margin-bottom: 1rem; }
+  .selector-header h1 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .selector-header p { font-size: 14px; color: var(--text-muted); }
+
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 12px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .app-card:hover {
+    border-color: #CDA04C;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .app-card.disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+  .app-card.disabled:hover { transform: none; border-color: var(--border); box-shadow: none; }
+
+  .app-card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .app-card-icon svg { width: 22px; height: 22px; }
+  .app-card-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .app-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .app-card-badge {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 99px; letter-spacing: 0.04em;
+  }
+  .badge-live { background: var(--obg-bg); color: var(--obg-text); }
+  .badge-soon { background: var(--outro-bg); color: var(--outro-text); }
+
+  .selector-footer {
+    margin-top: 2.5rem;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-hint);
+  }
+  .selector-footer button {
+    background: transparent; border: none;
+    font-size: 13px; color: var(--text-hint);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    text-decoration: underline;
+  }
+  .selector-footer button:hover { color: var(--text-muted); }
   .admin-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -615,7 +691,7 @@
   <div class="login-box">
     <div class="login-logo">
       <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" />
-      <span>Central de Links</span>
+      <span>Instituto Kaleizu</span>
     </div>
     <h2>Bem-vindo de volta</h2>
     <p>Faça login para acessar o painel</p>
@@ -627,8 +703,39 @@
       <label>Senha</label>
       <input type="password" id="login-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()" />
     </div>
-    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <div class="login-error" id="login-error">Email ou senha incorretos.</div>
     <button class="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="selector-screen">
+  <div class="selector-header">
+    <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" />
+    <h1>Instituto Kaleizu</h1>
+    <p>Selecione uma ferramenta para continuar</p>
+  </div>
+  <div class="apps-grid">
+    <div class="app-card" onclick="openApp('links')">
+      <span class="app-card-badge badge-live">Disponível</span>
+      <div class="app-card-icon" style="background:rgba(205,160,76,0.12);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#CDA04C" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <div class="app-card-name">Central de Links</div>
+      <div class="app-card-desc">Gerencie e organize todos os links das páginas do funil em um só lugar.</div>
+    </div>
+    <div class="app-card disabled">
+      <span class="app-card-badge badge-soon">Em breve</span>
+      <div class="app-card-icon" style="background:rgba(91,138,255,0.1);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5b8aff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <div class="app-card-name">Em desenvolvimento</div>
+      <div class="app-card-desc">Nova ferramenta chegando em breve para a equipe.</div>
+    </div>
+  </div>
+  <div class="selector-footer">
+    <span id="selector-email"></span>
+    <span>·</span>
+    <button onclick="doLogout()">Sair</button>
   </div>
 </div>
 
@@ -636,9 +743,11 @@
 <header>
   <div class="header-inner">
     <div class="logo-wrap">
-      <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" style="height:56px;width:auto;display:block;mix-blend-mode:lighten;" />
-      <span class="logo-sep"></span>
-      <span class="logo-title">Central de Links</span>
+      <div onclick="goToSelector()" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+        <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" style="height:56px;width:auto;display:block;mix-blend-mode:lighten;" />
+        <span class="logo-sep"></span>
+        <span class="logo-title">Central de Links</span>
+      </div>
     </div>
     <div class="search-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -863,6 +972,7 @@ async function doLogin() {
 async function doLogout() {
   await sb.auth.signOut();
   document.getElementById("app").style.display = "none";
+  document.getElementById("selector-screen").classList.remove("active");
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("login-user").value = "";
   document.getElementById("login-pass").value = "";
@@ -898,12 +1008,35 @@ async function callEdge(body) {
   }
 }
 
+function showSelector() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("selector-screen").classList.add("active");
+  sb.auth.getUser().then(({ data }) => {
+    if (data?.user?.email) {
+      document.getElementById("selector-email").textContent = data.user.email;
+    }
+  });
+}
+
+function openApp(app) {
+  if (app === "links") {
+    document.getElementById("selector-screen").classList.remove("active");
+    document.getElementById("app").style.display = "block";
+    if (isAdmin) document.getElementById("admin-btn").classList.add("visible");
+    loadData();
+  }
+}
+
+function goToSelector() {
+  document.getElementById("app").style.display = "none";
+  document.getElementById("selector-screen").classList.add("active");
+}
+
 function showApp() {
   document.getElementById("login-screen").style.display = "none";
-  document.getElementById("app").style.display = "block";
   document.getElementById("login-error").classList.remove("show");
-  if (isAdmin) document.getElementById("admin-btn").classList.add("visible");
-  loadData();
+  showSelector();
 }
 
 sb.auth.getSession().then(({ data }) => {
