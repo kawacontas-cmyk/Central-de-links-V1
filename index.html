@@ -803,7 +803,12 @@
 
 <div class="main">
   <aside class="sidebar">
-    <p class="sidebar-title">Grupos</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <p class="sidebar-title" style="margin-bottom:0;">Grupos</p>
+      <div id="new-group-btn" onclick="openGroupModal()" title="Novo grupo" style="display:none;width:22px;height:22px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;align-items:center;justify-content:center;color:var(--text-hint);transition:border-color 0.15s,color 0.15s;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+      </div>
+    </div>
     <ul class="nav-list" id="nav"></ul>
     <div class="legend">
       <p class="sidebar-title" style="margin-bottom:10px;">Tipos</p>
@@ -817,6 +822,18 @@
   </aside>
 
   <div class="content" id="content"></div>
+</div>
+
+<div class="modal-overlay" id="group-modal-overlay" onclick="closeGroupModal(event)">
+  <div class="modal">
+    <h3>Criar novo grupo</h3>
+    <label>Nome do grupo</label>
+    <input type="text" id="group-name-input" placeholder="Ex: L18, Black Friday 2, Comercial 2..." onkeydown="if(event.key==='Enter')confirmCreateGroup()" />
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeGroupModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmCreateGroup()">Criar grupo</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
@@ -1027,9 +1044,37 @@ function openApp(app) {
   if (app === "links") {
     document.getElementById("selector-screen").classList.remove("active");
     document.getElementById("app").style.display = "block";
-    if (isAdmin) document.getElementById("admin-btn").classList.add("visible");
+    if (isAdmin) {
+      document.getElementById("admin-btn").classList.add("visible");
+      document.getElementById("new-group-btn").style.display = "flex";
+    }
     loadData();
   }
+}
+
+function openGroupModal() {
+  document.getElementById("group-name-input").value = "";
+  document.getElementById("group-modal-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("group-name-input").focus(), 50);
+}
+
+function closeGroupModal(e) {
+  if (!e || e.target === document.getElementById("group-modal-overlay"))
+    document.getElementById("group-modal-overlay").classList.remove("open");
+}
+
+async function confirmCreateGroup() {
+  const name = document.getElementById("group-name-input").value.trim();
+  if (!name) return;
+  if (groupOrder.includes(name)) {
+    alert("Já existe um grupo com esse nome.");
+    return;
+  }
+  groupOrder.push(name);
+  collapsedGroups.add(name);
+  await saveGroupOrder();
+  document.getElementById("group-modal-overlay").classList.remove("open");
+  render();
 }
 
 function goToSelector() {
