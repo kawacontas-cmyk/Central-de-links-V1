@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central de Pesquisas — Prof. Kaleizu</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -362,11 +363,15 @@ async function renderSheet(id) {
   const cols = (sheet.cols&&sheet.cols.length) ? sheet.cols :
     rows.length ? Object.keys(rows[0]).filter(k=>!k.startsWith('_')) : [];
   colsCache[id] = cols;
+
+  // Colunas abertas (texto livre) — excluídas dos gráficos
+  const OPEN_COLS = new Set(['Email','Telefone','Nome','_id','_criado']);
+
   main.innerHTML = `
     <div class="page-header">
       <div>
         <div class="page-title">${id} <span class="badge badge-${sheet.tipo==='Captação'?'cap':'alu'}">${sheet.tipo}</span></div>
-        <div class="page-sub" id="sheetSub">${rows.length.toLocaleString('pt-BR')} respostas</div>
+        <div class="page-sub">${rows.length.toLocaleString('pt-BR')} respostas</div>
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="openImportCSV('${id.replace(/'/g,"\\'")}')">&#8593; Importar CSV</button>
@@ -374,13 +379,88 @@ async function renderSheet(id) {
         <button class="btn btn-primary" onclick="openAddResposta('${id.replace(/'/g,"\\'")}')">+ Adicionar</button>
       </div>
     </div>
-    <div id="sheetStats" style="margin-bottom:16px"></div>
-    <div class="toolbar" id="toolbar"></div>
-    <div class="tbl-wrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-    <div class="pagination" id="pagination"></div>`;
+    <div id="sheetStats" style="margin-bottom:20px"></div>
+    <div id="chartsArea" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px"></div>`;
+
   renderSheetStats(rows);
-  renderToolbar(id, rows);
-  renderTable(id, rows, cols);
+  renderPieCharts(cols, rows, OPEN_COLS);
+}
+
+function renderPieCharts(cols, rows, openCols) {
+  const PALETTE = [
+    '#c9a84c','#7cc4a8','#e05a5a','#5b8aff','#e8c97a',
+    '#a98bff','#f07ab0','#5fcd8a','#ffb94a','#7a83a8',
+    '#4dc9f6','#f67019','#f53794','#537bc4','#acc236'
+  ];
+
+  const area = document.getElementById('chartsArea');
+  const closedCols = cols.filter(c => !openCols.has(c));
+
+  closedCols.forEach((col, idx) => {
+    // Conta valores únicos
+    const freq = {};
+    rows.forEach(r => {
+      const v = (r[col]||'').toString().trim();
+      if (v && v !== 'nan' && v !== '—') freq[v] = (freq[v]||0) + 1;
+    });
+    const entries = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+    if (!entries.length) return;
+
+    const canvasId = `chart-${idx}`;
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+    card.innerHTML = `
+      <div class="chart-title">${col}</div>
+      <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center">
+        <canvas id="${canvasId}"></canvas>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px" id="legend-${idx}"></div>`;
+    area.appendChild(card);
+
+    const total = entries.reduce((s,[,v])=>s+v,0);
+    const labels = entries.map(([k])=>k);
+    const data   = entries.map(([,v])=>v);
+    const colors = entries.map((_,i)=>PALETTE[i%PALETTE.length]);
+
+    // Legenda
+    const leg = card.querySelector(`#legend-${idx}`);
+    entries.forEach(([k,v],i)=>{
+      const pct = Math.round(v/total*100);
+      leg.innerHTML += `<div style="display:flex;align-items:center;gap:8px;font-size:11px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${colors[i]};flex-shrink:0"></span>
+        <span style="color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${k}">${k}</span>
+        <span style="color:var(--text);font-family:var(--mono)">${pct}%</span>
+        <span style="color:var(--hint);font-family:var(--mono)">${v.toLocaleString('pt-BR')}</span>
+      </div>`;
+    });
+
+    // Chart.js
+    requestAnimationFrame(()=>{
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets:[{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#0f1428', hoverOffset: 6 }]},
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const pct = Math.round(ctx.parsed/total*100);
+                  return ` ${ctx.parsed.toLocaleString('pt-BR')} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+  });
 }
 function renderSheetStats(rows) {
   const el = document.getElementById('sheetStats'); if(!el) return;
