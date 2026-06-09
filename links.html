@@ -1084,7 +1084,16 @@ function showApp() {
 }
 
 sb.auth.getSession().then(({ data }) => {
-  if (!data.session) { window.location.href = "index.html"; return; }
+  if (!data.session) {
+    setTimeout(() => {
+      sb.auth.getSession().then(({ data: data2 }) => {
+        if (!data2.session) { window.location.href = "index.html"; return; }
+        isAdmin = data2.session.user?.user_metadata?.role === "admin";
+        showApp();
+      });
+    }, 500);
+    return;
+  }
   isAdmin = data.session.user?.user_metadata?.role === "admin";
   showApp();
 });
