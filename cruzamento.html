@@ -167,15 +167,8 @@ const _sb = supabase.createClient(
   "https://iabugpuqlcfftwabuxsj.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY"
 );
-_sb.auth.getSession().then(({ data }) => {
-  if (!data.session) {
-    setTimeout(() => {
-      _sb.auth.getSession().then(({ data: data2 }) => {
-        if (!data2.session) window.location.href = "index.html";
-      });
-    }, 500);
-  }
-});
+// Logout apenas
+
 async function doLogout() {
   await _sb.auth.signOut();
   window.location.href = "index.html";
