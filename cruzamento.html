@@ -335,6 +335,12 @@ function renderApp() {
     <div class="metrics" id="metrics-row"></div>
     <div class="chart-card">
       <div class="legend" id="legend-row"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;font-size:11px;font-family:var(--mono,monospace)">
+        <span style="color:var(--muted)">Índice de conversão:</span>
+        <span style="color:#5fcd8a">▲ positivo (compradores sobre-representados)</span>
+        <span style="color:#e05a5a">▼ negativo (compradores sub-representados)</span>
+        <span style="color:#8b93b8">≈ neutro</span>
+      </div>
       <div class="chart-wrap" id="chart-wrap">
         <canvas id="mainChart"></canvas>
       </div>
@@ -460,6 +466,9 @@ function renderChart() {
   const datasets = [];
   datasetsCountsRef = [];
 
+  // Pré-calcula índices de conversão por produto e label
+  // Fórmula: ((buyers_n / leads_n) - 1) * 100
+  const conversionByProduct = [];
   selected.forEach((p, i) => {
     const pal = PALETTES[i % PALETTES.length];
     const d = p[currentCategory] || p.dados?.[currentCategory];
@@ -468,16 +477,59 @@ function renderChart() {
     datasetsCountsRef.push(d.leads_n);
     datasets.push({ label: `${p.name} — Compradores`, data: d.buyers, backgroundColor: pal.buyers, borderColor: pal.bb, borderWidth: 1, borderRadius: 3 });
     datasetsCountsRef.push(d.buyers_n);
+    conversionByProduct.push({ name: p.name, pal, leads_n: d.leads_n, buyers_n: d.buyers_n });
   });
 
   const barH = Math.max(labels.length * (selected.length > 1 ? 72 : 52) + 80, 220);
   wrap.style.height = barH + 'px';
 
+  // Plugin que desenha o índice de conversão após as barras
+  const conversionPlugin = {
+    id: 'conversionIndex',
+    afterDatasetsDraw(chartInstance) {
+      const ctx = chartInstance.ctx;
+      const xScale = chartInstance.scales.x;
+      const yScale = chartInstance.scales.y;
+
+      labels.forEach((label, labelIdx) => {
+        conversionByProduct.forEach((prod, prodIdx) => {
+          const ln = prod.leads_n[labelIdx] || 0;
+          const bn = prod.buyers_n[labelIdx] || 0;
+          if (ln === 0) return;
+
+          const index = ((bn / ln) - 1) * 100;
+          const sign  = index >= 0 ? '+' : '';
+          const text  = `${sign}${index.toFixed(0)}%`;
+          const color = index > 5 ? '#5fcd8a' : index < -5 ? '#e05a5a' : '#8b93b8';
+
+          // Posição X: final das barras (valor 100% da escala ou um pouco à direita do máximo)
+          const xPos = xScale.getPixelForValue(xScale.max) + 6;
+
+          // Posição Y: centro do grupo de barras deste label
+          const meta = chartInstance.getDatasetMeta(prodIdx * 2); // dataset leads
+          if (!meta.data[labelIdx]) return;
+          const bar = meta.data[labelIdx];
+          const yPos = bar.y + (selected.length > 1 ? (prodIdx === 0 ? -8 : 8) : 0);
+
+          ctx.save();
+          ctx.font = `500 11px 'DM Mono', monospace`;
+          ctx.fillStyle = color;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, xPos, yPos);
+          ctx.restore();
+        });
+      });
+    }
+  };
+
   chart = new Chart(document.getElementById('mainChart'), {
     type: 'bar',
     data: { labels, datasets },
+    plugins: [conversionPlugin],
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 52 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -486,7 +538,23 @@ function renderChart() {
           callbacks: {
             label: ctx => {
               const pct = ctx.parsed.x.toFixed(1);
-              const n = datasetsCountsRef[ctx.datasetIndex]?.[ctx.dataIndex] ?? '—';
+              const n   = datasetsCountsRef[ctx.datasetIndex]?.[ctx.dataIndex] ?? '—';
+              // Calcula índice para o tooltip também
+              const isLeads   = ctx.datasetIndex % 2 === 0;
+              const prodIdx   = Math.floor(ctx.datasetIndex / 2);
+              const prod      = conversionByProduct[prodIdx];
+              if (prod && !isLeads) {
+                const ln = prod.leads_n[ctx.dataIndex] || 0;
+                const bn = prod.buyers_n[ctx.dataIndex] || 0;
+                if (ln > 0) {
+                  const idx = ((bn / ln) - 1) * 100;
+                  const sign = idx >= 0 ? '+' : '';
+                  return [
+                    ` ${ctx.dataset.label}: ${pct}%  (n = ${n})`,
+                    ` Índice de conversão: ${sign}${idx.toFixed(1)}%`
+                  ];
+                }
+              }
               return ` ${ctx.dataset.label}: ${pct}%  (n = ${n})`;
             }
           }
