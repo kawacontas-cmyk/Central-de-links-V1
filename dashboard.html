@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard de Métricas — Instituto Kaleizu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060B1F; --surface: #0e1530; --surface2: #131a38; --card: #0f1428;
+  --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+  --text: #e8eaf6; --muted: #8b93b8; --hint: #3a4060;
+  --gold: #CDA04C; --gold-light: #e8c97a; --gold-dim: rgba(205,160,76,0.12);
+  --teal: #7cc4a8; --danger: #e05a5a; --success: #5fcd8a;
+  --cardio: #5b8aff; --clinica: #7cc4a8;
+  --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+  --r: 8px; --r2: 12px;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+/* TOPBAR */
+.topbar { height: 56px; background: #0a0e1f; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 14px; position: sticky; top: 0; z-index: 50; }
+.topbar-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar-logo img { width: 32px; height: 32px; object-fit: contain; mix-blend-mode: lighten; }
+.topbar-name { font-size: 14px; font-weight: 500; color: var(--gold); padding-left: 10px; border-left: 1px solid var(--border); white-space: nowrap; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn-topbar { background: none; border: 1px solid var(--border); border-radius: var(--r); padding: 6px 14px; font-size: 12px; color: var(--muted); cursor: pointer; font-family: var(--font); transition: all .15s; }
+.btn-topbar:hover { color: var(--text); border-color: var(--gold); }
+.btn-topbar.gold { border-color: rgba(205,160,76,0.4); color: var(--gold); }
+.btn-topbar.gold:hover { background: var(--gold-dim); }
+
+/* MAIN */
+.main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--muted); }
+
+/* FILTERS */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; align-items: center; }
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-group label { font-size: 12px; color: var(--muted); white-space: nowrap; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.filter-group select { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 12px; font-size: 13px; color: var(--text); font-family: var(--font); outline: none; cursor: pointer; min-width: 180px; transition: border-color .15s; }
+.filter-group select:focus { border-color: var(--gold); }
+.filter-group select option { background: #0e1530; }
+
+/* KPI GRID */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); padding: 16px; border-top: 2px solid var(--gold); transition: border-color .15s; }
+.kpi:hover { border-color: var(--gold); }
+.kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--mono); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.kpi-value { font-size: 22px; font-weight: 500; color: var(--gold-light); letter-spacing: -.5px; line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--hint); margin-top: 4px; font-family: var(--mono); }
+
+/* CHARTS GRID */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); padding: 18px 20px; }
+.chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.chart-wrap { position: relative; width: 100%; height: 220px; }
+
+/* TABLE */
+.table-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); padding: 18px 20px; margin-bottom: 16px; overflow-x: auto; }
+.table-card table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.table-card th { font-size: 10px; font-weight: 500; color: var(--gold); text-transform: uppercase; letter-spacing: .06em; font-family: var(--mono); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table-card td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+.table-card tr:last-child td { border-bottom: none; }
+.table-card tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 500; font-family: var(--font); }
+.badge-cardio { background: rgba(91,138,255,0.15); color: var(--cardio); }
+.badge-clinica { background: rgba(124,196,168,0.15); color: var(--clinica); }
+
+/* SECTION LABEL */
+.section-label { font-size: 10px; font-family: var(--mono); color: var(--gold); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+
+@media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } .main { padding: 16px 12px 40px; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">
+    <img src="Icone_Kaleizu.png" alt="Instituto Kaleizu" />
+    <span class="topbar-name">Dashboard de Métricas</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-topbar gold" onclick="window.location.href='index.html'">&#8592; Voltar</button>
+    <button class="btn-topbar" onclick="doLogout()">Sair</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">Métricas de Lançamentos</div>
+    <div class="page-sub">Instituto Kaleizu · Pós-Graduação Cardio e Clínica · dados consolidados por lançamento</div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Produto</label>
+      <select id="prodFilter" onchange="onProdChange()">
+        <option value="all">Todos</option>
+        <option value="cardio">Cardio (CardioPrime)</option>
+        <option value="clinica">Clínica (PósVet 360)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Lançamento</label>
+      <select id="lancFilter" onchange="render()">
+        <option value="all">Todos</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">KPIs consolidados</div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="section-label">Gráficos</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Receita bruta por lançamento</div>
+      <div class="chart-legend" id="legend1"></div>
+      <div class="chart-wrap"><canvas id="chartReceita" role="img" aria-label="Receita bruta por lançamento"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Leads e CPL por lançamento</div>
+      <div class="chart-legend" id="legend2"></div>
+      <div class="chart-wrap"><canvas id="chartLeads" role="img" aria-label="Leads e CPL por lançamento"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">ROAS e CAC por lançamento</div>
+      <div class="chart-legend" id="legend3"></div>
+      <div class="chart-wrap"><canvas id="chartRoas" role="img" aria-label="ROAS e CAC"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Taxas de conversão (%)</div>
+      <div class="chart-legend" id="legend4"></div>
+      <div class="chart-wrap"><canvas id="chartConv" role="img" aria-label="Taxas de conversão"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-label">Tabela de lançamentos</div>
+  <div class="table-card">
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Lanç.</th><th>Produto</th><th>Data</th><th>Leads</th><th>Invest.</th><th>CPL Total</th><th>Vendas</th><th>Receita bruta</th><th>CAC</th><th>ROAS</th><th>Conv. total</th><th>Tx. captura</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── AUTH ──────────────────────────────────────────────
+const sb = supabase.createClient(
+  "https://iabugpuqlcfftwabuxsj.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY"
+);
+async function doLogout() { await sb.auth.signOut(); window.location.href = "index.html"; }
+
+// ── DATA ──────────────────────────────────────────────
+const ALL_DATA = [
+  { id:'L4KR',  prod:'cardio',  data:'17/02/2025', invest:0,        leads:201,  cplTrafico:0,     cplTotal:0,     vendas:37,  receita:259000,  cac:0,       roas:null,  convTotal:0.184080, txCaptura:0.200000 },
+  { id:'L5KR',  prod:'cardio',  data:'10/03/2025', invest:29559.21, leads:2304, cplTrafico:25.62, cplTotal:11.75, vendas:56,  receita:559440,  cac:527.84,  roas:null,  convTotal:0.024306, txCaptura:0.041979 },
+  { id:'L6KR',  prod:'cardio',  data:'28/04/2025', invest:48451.01, leads:4417, cplTrafico:12.19, cplTotal:9.58,  vendas:12,  receita:119880,  cac:4037.58, roas:null,  convTotal:0.002717, txCaptura:0.002990 },
+  { id:'L8KR',  prod:'cardio',  data:'21/05/2025', invest:9570.45,  leads:212,  cplTrafico:37.04, cplTotal:37.04, vendas:2,   receita:19980,   cac:4785.23, roas:null,  convTotal:0.009434, txCaptura:0.015152 },
+  { id:'L10KR', prod:'cardio',  data:'23/07/2025', invest:28233.36, leads:2086, cplTrafico:26.60, cplTotal:12.32, vendas:23,  receita:229770,  cac:1227.54, roas:null,  convTotal:0.011026, txCaptura:0.023023 },
+  { id:'L13KR', prod:'cardio',  data:'05/11/2025', invest:40346.04, leads:1866, cplTrafico:46.78, cplTotal:18.83, vendas:123, receita:613770,  cac:328.02,  roas:null,  convTotal:0.065916, txCaptura:0.132829 },
+  { id:'L15KR', prod:'cardio',  data:'09/02/2026', invest:47215.37, leads:2951, cplTrafico:28.29, cplTotal:13.39, vendas:34,  receita:285907,  cac:1388.69, roas:null,  convTotal:0.011522, txCaptura:0.025335 },
+  { id:'L17KR', prod:'cardio',  data:'13/04/2026', invest:50928.79, leads:3022, cplTrafico:34.32, cplTotal:16.17, vendas:32,  receita:255680,  cac:1591.52, roas:null,  convTotal:0.010589, txCaptura:0.021651 },
+  { id:'L7KR',  prod:'clinica', data:'19/05/2025', invest:27213,    leads:1521, cplTrafico:36.38, cplTotal:15.74, vendas:56,  receita:279440,  cac:485.95,  roas:10.27, convTotal:0.036818, txCaptura:0.068627 },
+  { id:'L11KR', prod:'clinica', data:'08/09/2025', invest:30383,    leads:793,  cplTrafico:37.31, cplTotal:31.48, vendas:51,  receita:152490,  cac:595.75,  roas:5.02,  convTotal:0.064313, txCaptura:0.075110 },
+  { id:'L14KR', prod:'clinica', data:'12/01/2026', invest:39762.97, leads:1836, cplTrafico:30.78, cplTotal:13.59, vendas:72,  receita:215280,  cac:552.26,  roas:5.41,  convTotal:0.039216, txCaptura:0.071500 },
+  { id:'L16KR', prod:'clinica', data:'17/02/2026', invest:55523.75, leads:3261, cplTrafico:33.19, cplTotal:15.08, vendas:81,  receita:242190,  cac:685.48,  roas:4.36,  convTotal:0.024839, txCaptura:0.056802 },
+  { id:'L18KR', prod:'clinica', data:'11/05/2026', invest:36521.56, leads:857,  cplTrafico:46.79, cplTotal:36.96, vendas:42,  receita:125580,  cac:869.56,  roas:3.44,  convTotal:0.049008, txCaptura:0.058989 },
+];
+
+let charts = {};
+
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: {
+    backgroundColor: '#0f1428', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+    titleColor: '#e8eaf6', bodyColor: '#8b93b8', padding: 10,
+  }},
+  scales: {
+    x: { ticks: { font: { size: 10, family: "'DM Mono',monospace" }, color: '#3a4060', maxRotation: 45, autoSkip: false }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.06)' } },
+    y: { ticks: { font: { size: 10, family: "'DM Mono',monospace" }, color: '#3a4060' }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.06)' } },
+  }
+};
+
+function fmt(n, type = 'num') {
+  if (n == null || isNaN(n) || n === '') return '—';
+  if (type === 'brl') return 'R$ ' + Math.round(n).toLocaleString('pt-BR');
+  if (type === 'pct') return (n * 100).toFixed(1) + '%';
+  if (type === 'dec') return n.toFixed(2);
+  return Math.round(n).toLocaleString('pt-BR');
+}
+
+function getColor(d) { return d.prod === 'cardio' ? 'rgba(91,138,255,0.7)' : 'rgba(124,196,168,0.7)'; }
+function getBorder(d) { return d.prod === 'cardio' ? '#5b8aff' : '#7cc4a8'; }
+
+function populateLancamentos(prod) {
+  const sel = document.getElementById('lancFilter');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="all">Todos</option>';
+  ALL_DATA.filter(d => prod === 'all' || d.prod === prod).forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = d.id + ' · ' + d.data;
+    sel.appendChild(opt);
+  });
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : 'all';
+}
+
+function onProdChange() { populateLancamentos(document.getElementById('prodFilter').value); render(); }
+
+function filtered() {
+  const p = document.getElementById('prodFilter').value;
+  const l = document.getElementById('lancFilter').value;
+  return ALL_DATA.filter(d => (p === 'all' || d.prod === p) && (l === 'all' || d.id === l));
+}
+
+function kpis(data) {
+  const totalLeads   = data.reduce((a, d) => a + d.leads, 0);
+  const totalInvest  = data.reduce((a, d) => a + d.invest, 0);
+  const totalReceita = data.reduce((a, d) => a + d.receita, 0);
+  const totalVendas  = data.reduce((a, d) => a + d.vendas, 0);
+  const withCpl  = data.filter(d => d.cplTotal > 0);
+  const withCac  = data.filter(d => d.cac > 0);
+  const withRoas = data.filter(d => d.roas);
+  const withConv = data.filter(d => d.convTotal > 0);
+  const avgCpl  = withCpl.length  ? withCpl.reduce((a, d) => a + d.cplTotal, 0) / withCpl.length  : null;
+  const avgCac  = withCac.length  ? withCac.reduce((a, d) => a + d.cac, 0) / withCac.length        : null;
+  const avgRoas = withRoas.length ? withRoas.reduce((a, d) => a + d.roas, 0) / withRoas.length     : null;
+  const avgConv = withConv.length ? withConv.reduce((a, d) => a + d.convTotal, 0) / withConv.length: null;
+
+  const items = [
+    { label: 'Total de leads',      value: fmt(totalLeads),                  sub: null },
+    { label: 'Receita bruta',       value: fmt(totalReceita, 'brl'),          sub: null },
+    { label: 'Total de vendas',     value: fmt(totalVendas),                  sub: null },
+    { label: 'Investimento total',  value: fmt(totalInvest, 'brl'),           sub: null },
+    { label: 'CPL médio',           value: avgCpl  ? fmt(avgCpl, 'brl')  : '—', sub: null },
+    { label: 'CAC médio',           value: avgCac  ? fmt(avgCac, 'brl')  : '—', sub: null },
+    { label: 'ROAS médio',          value: avgRoas ? avgRoas.toFixed(2) + 'x': '—', sub: null },
+    { label: 'Conv. média',         value: avgConv ? fmt(avgConv, 'pct') : '—', sub: null },
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = items.map(k =>
+    `<div class="kpi">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+    </div>`
+  ).join('');
+}
+
+function makeChart(id, type, labels, datasets, extraOpts = {}) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const ctx = document.getElementById(id).getContext('2d');
+  const opts = JSON.parse(JSON.stringify(CHART_DEFAULTS));
+  if (extraOpts.scales) {
+    Object.entries(extraOpts.scales).forEach(([k, v]) => { opts.scales[k] = { ...opts.scales[k], ...v }; });
+  }
+  if (extraOpts.extra) Object.assign(opts, extraOpts.extra);
+  charts[id] = new Chart(ctx, { type, data: { labels, datasets }, options: opts });
+}
+
+function render() {
+  const data = filtered();
+  kpis(data);
+  const labels = data.map(d => d.id);
+
+  // Receita
+  document.getElementById('legend1').innerHTML =
+    `<span class="legend-item"><span class="legend-sq" style="background:rgba(91,138,255,0.7)"></span>Cardio</span>
+     <span class="legend-item"><span class="legend-sq" style="background:rgba(124,196,168,0.7)"></span>Clínica</span>`;
+  makeChart('chartReceita', 'bar', labels, [{
+    label: 'Receita bruta', data: data.map(d => d.receita),
+    backgroundColor: data.map(getColor), borderColor: data.map(getBorder), borderWidth: 1, borderRadius: 3
+  }], { scales: { y: { ticks: { callback: v => 'R$' + Math.round(v / 1000) + 'k', color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" } } } } });
+
+  // Leads + CPL
+  document.getElementById('legend2').innerHTML =
+    `<span class="legend-item"><span class="legend-sq" style="background:rgba(169,139,255,0.7)"></span>Leads</span>
+     <span class="legend-item"><span class="legend-dot" style="background:#CDA04C"></span>CPL total (R$)</span>`;
+  makeChart('chartLeads', 'bar', labels, [
+    { label: 'Leads', data: data.map(d => d.leads), backgroundColor: 'rgba(169,139,255,0.7)', borderColor: '#a98bff', borderWidth: 1, borderRadius: 3, yAxisID: 'y' },
+    { label: 'CPL Total', data: data.map(d => d.cplTotal || 0), type: 'line', borderColor: '#CDA04C', backgroundColor: '#CDA04C', pointRadius: 4, yAxisID: 'y1', tension: 0.3 }
+  ], { scales: {
+    y:  { position: 'left',  ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y1: { position: 'right', ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" }, callback: v => 'R$' + v }, grid: { drawOnChartArea: false } }
+  }});
+
+  // ROAS + CAC
+  document.getElementById('legend3').innerHTML =
+    `<span class="legend-item"><span class="legend-sq" style="background:rgba(124,196,168,0.7)"></span>ROAS (x)</span>
+     <span class="legend-item"><span class="legend-dot" style="background:#e8c97a"></span>CAC (R$/100)</span>`;
+  makeChart('chartRoas', 'bar', labels, [
+    { label: 'ROAS', data: data.map(d => d.roas || 0), backgroundColor: 'rgba(124,196,168,0.7)', borderColor: '#7cc4a8', borderWidth: 1, borderRadius: 3, yAxisID: 'y' },
+    { label: 'CAC /100', data: data.map(d => (d.cac || 0) / 100), type: 'line', borderColor: '#e8c97a', backgroundColor: '#e8c97a', pointRadius: 4, yAxisID: 'y1', tension: 0.3 }
+  ], { scales: {
+    y:  { position: 'left',  ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y1: { position: 'right', ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" }, callback: v => 'R$' + (v * 100).toFixed(0) }, grid: { drawOnChartArea: false } }
+  }});
+
+  // Conversão
+  document.getElementById('legend4').innerHTML =
+    `<span class="legend-item"><span class="legend-sq" style="background:rgba(169,139,255,0.7)"></span>Conv. total</span>
+     <span class="legend-item"><span class="legend-sq" style="background:rgba(91,138,255,0.5)"></span>Tx. captura</span>`;
+  makeChart('chartConv', 'bar', labels, [
+    { label: 'Conv. total', data: data.map(d => +(d.convTotal * 100).toFixed(2)), backgroundColor: 'rgba(169,139,255,0.7)', borderColor: '#a98bff', borderWidth: 1, borderRadius: 3 },
+    { label: 'Tx. captura', data: data.map(d => +(d.txCaptura * 100).toFixed(2)), backgroundColor: 'rgba(91,138,255,0.5)', borderColor: '#5b8aff', borderWidth: 1, borderRadius: 3 },
+  ], { scales: { y: { ticks: { callback: v => v + '%', color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" } } } } });
+
+  // Tabela
+  document.getElementById('tabelaBody').innerHTML = data.map(d => `<tr>
+    <td><strong style="color:var(--gold-light)">${d.id}</strong></td>
+    <td><span class="badge badge-${d.prod}">${d.prod === 'cardio' ? 'Cardio' : 'Clínica'}</span></td>
+    <td style="color:var(--muted)">${d.data}</td>
+    <td>${fmt(d.leads)}</td>
+    <td>${fmt(d.invest, 'brl')}</td>
+    <td>${fmt(d.cplTotal, 'brl')}</td>
+    <td>${fmt(d.vendas)}</td>
+    <td style="color:var(--success)">${fmt(d.receita, 'brl')}</td>
+    <td>${fmt(d.cac, 'brl')}</td>
+    <td>${d.roas ? d.roas.toFixed(2) + 'x' : '—'}</td>
+    <td>${fmt(d.convTotal, 'pct')}</td>
+    <td>${fmt(d.txCaptura, 'pct')}</td>
+  </tr>`).join('');
+}
+
+populateLancamentos('all');
+render();
+</script>
+</body>
+</html>
