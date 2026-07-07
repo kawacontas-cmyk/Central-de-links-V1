@@ -356,8 +356,7 @@ function renderApp() {
     <div class="tabs" id="cat-tabs"></div>
     <div class="metrics" id="metrics-row"></div>
     <div class="chart-card">
-      <div class="legend" id="legend-row"></div>
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;font-size:11px;font-family:var(--mono,monospace)">
+      <div class="legend" id="legend-row"></div>      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;font-size:11px;font-family:var(--mono,monospace)">
         <span style="color:var(--muted)">Índice de conversão (compradores % ÷ leads %):</span>
         <span style="color:#5fcd8a">▲ &gt;1.05x (sobre-representados)</span>
         <span style="color:#e8c97a">≈ 0.95x–1.05x (neutro)</span>
@@ -458,18 +457,9 @@ function renderMetrics() {
 function renderLegend() {
   const el = document.getElementById('legend-row');
   if (!el) return;
-  const selected = PRODUCTS.filter(p => selectedProducts.has(p.id));
-  if (selected.length === 1) {
-    el.innerHTML = `
-      <span><span class="legend-dot" style="background:${PALETTES[0].lb}"></span>Leads (Captação)</span>
-      <span><span class="legend-dot" style="background:${PALETTES[0].bb}"></span>Compradores</span>`;
-  } else {
-    el.innerHTML = selected.map((p, i) => {
-      const pal = PALETTES[i % PALETTES.length];
-      return `<span><span class="legend-dot" style="background:${pal.lb}"></span>${p.name} — Leads</span>
-              <span><span class="legend-dot" style="background:${pal.bb}"></span>${p.name} — Compradores</span>`;
-    }).join('');
-  }
+  el.innerHTML = `
+    <span><span class="legend-dot" style="background:#CDA04C"></span>Leads (Captação)</span>
+    <span><span class="legend-dot" style="background:#7cc4a8"></span>Compradores</span>`;
 }
 
 function renderChart() {
@@ -488,49 +478,58 @@ function renderChart() {
   const datasets = [];
   datasetsCountsRef = [];
 
-  // Pré-calcula índices de conversão por produto e label
-  // Fórmula: ((buyers_n / leads_n) - 1) * 100
+  const LEADS_COLOR   = { bg: 'rgba(205,160,76,0.75)',  border: '#CDA04C' };
+  const BUYERS_COLOR  = { bg: 'rgba(124,196,168,0.75)', border: '#7cc4a8' };
+
   const conversionByProduct = [];
   selected.forEach((p, i) => {
-    const pal = PALETTES[i % PALETTES.length];
     const d = p[currentCategory] || p.dados?.[currentCategory];
     if (!d) return;
-    datasets.push({ label: `${p.name} — Leads`, data: d.leads, backgroundColor: pal.leads, borderColor: pal.lb, borderWidth: 1, borderRadius: 3 });
+    datasets.push({ label: `${p.name} — Leads`,       data: d.leads,  backgroundColor: LEADS_COLOR.bg,  borderColor: LEADS_COLOR.border,  borderWidth: 1, borderRadius: 3 });
     datasetsCountsRef.push(d.leads_n);
-    datasets.push({ label: `${p.name} — Compradores`, data: d.buyers, backgroundColor: pal.buyers, borderColor: pal.bb, borderWidth: 1, borderRadius: 3 });
+    datasets.push({ label: `${p.name} — Compradores`, data: d.buyers, backgroundColor: BUYERS_COLOR.bg, borderColor: BUYERS_COLOR.border, borderWidth: 1, borderRadius: 3 });
     datasetsCountsRef.push(d.buyers_n);
-    conversionByProduct.push({ name: p.name, pal, leads: d.leads, buyers: d.buyers, leads_n: d.leads_n, buyers_n: d.buyers_n });
+    conversionByProduct.push({ name: p.name, short: p.id.toUpperCase(), leads: d.leads, buyers: d.buyers, leads_n: d.leads_n, buyers_n: d.buyers_n });
   });
 
   const barH = Math.max(labels.length * (selected.length > 1 ? 72 : 52) + 80, 220);
   wrap.style.height = barH + 'px';
 
-  // Plugin que desenha o índice de conversão após as barras
+  // Plugin que desenha label do lançamento à esquerda e índice à direita
   const conversionPlugin = {
     id: 'conversionIndex',
     afterDatasetsDraw(chartInstance) {
       const ctx = chartInstance.ctx;
       const xScale = chartInstance.scales.x;
-      const yScale = chartInstance.scales.y;
 
       labels.forEach((label, labelIdx) => {
         conversionByProduct.forEach((prod, prodIdx) => {
           const lp = prod.leads[labelIdx] || 0;
           const bp = prod.buyers[labelIdx] || 0;
-          if (lp === 0) return;
 
-          const index = bp / lp;
-          const text  = index.toFixed(2) + 'x';
-          const color = index > 1.05 ? '#5fcd8a' : index >= 0.95 ? '#e8c97a' : '#e05a5a';
-
-          // Posição X: final das barras (valor 100% da escala ou um pouco à direita do máximo)
-          const xPos = xScale.getPixelForValue(xScale.max) + 6;
-
-          // Posição Y: centro do grupo de barras deste label
-          const meta = chartInstance.getDatasetMeta(prodIdx * 2); // dataset leads
+          const meta = chartInstance.getDatasetMeta(prodIdx * 2);
           if (!meta.data[labelIdx]) return;
           const bar = meta.data[labelIdx];
           const yPos = bar.y + (selected.length > 1 ? (prodIdx === 0 ? -8 : 8) : 0);
+
+          // Label do lançamento à esquerda (só quando múltiplos selecionados)
+          if (selected.length > 1) {
+            const xLeft = xScale.getPixelForValue(0) - 6;
+            ctx.save();
+            ctx.font = `500 10px 'DM Mono', monospace`;
+            ctx.fillStyle = prodIdx === 0 ? LEADS_COLOR.border : BUYERS_COLOR.border;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(prod.short, xLeft, yPos);
+            ctx.restore();
+          }
+
+          // Índice de conversão à direita
+          if (lp === 0) return;
+          const index = bp / lp;
+          const text  = index.toFixed(2) + 'x';
+          const color = index > 1.05 ? '#5fcd8a' : index >= 0.95 ? '#e8c97a' : '#e05a5a';
+          const xPos  = xScale.getPixelForValue(xScale.max) + 6;
 
           ctx.save();
           ctx.font = `500 11px 'DM Mono', monospace`;
@@ -550,7 +549,7 @@ function renderChart() {
     plugins: [conversionPlugin],
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      layout: { padding: { right: 52 } },
+      layout: { padding: { right: 52, left: selected.length > 1 ? 40 : 0 } },
       plugins: {
         legend: { display: false },
         tooltip: {
