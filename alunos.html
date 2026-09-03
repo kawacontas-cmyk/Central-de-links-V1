@@ -609,30 +609,9 @@
   </div>
 </div>
 
-<!-- ============ SUPABASE (auth) ============ -->
+<!-- ============ SUPABASE (auth + dados) ============ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- ============ FIRESTORE (dados) ============ -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot,
-    query, orderBy, getDoc, writeBatch
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  // ======================================================
-  // Firestore — usado APENAS para os dados dos alunos.
-  // A autenticação do painel é feita pelo Supabase (abaixo).
-  // ======================================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyASQBvvsLhIDt0096Ndl1CaAvpFois0RDY",
-    authDomain: "kaleizu-alunos.firebaseapp.com",
-    projectId: "kaleizu-alunos",
-    storageBucket: "kaleizu-alunos.firebasestorage.app",
-    messagingSenderId: "307510605542",
-    appId: "1:307510605542:web:1a11d1a16dd174c07ced27"
-  };
-
+<script>
   // ======================================================
   // MODO DE TESTE — abra a página com ?demo na URL para
   // navegar com dados de exemplo, sem tocar no banco real.
@@ -646,14 +625,13 @@
     { id:"d5", nome:"Fernanda Costa", email:"fernanda@email.com", celular:"(21) 97777-4321", cpf:"555.666.777-88", curso:"Pós Clínica", turma:"T1", lancamento:"L6", dataInicio:"2025-06-15", dataFim:"2026-09-10", canalVendas:"VOOMP", status:"Inativo", statusMatricula:"Aguardando efetivação", grupoWhats:"Não está no grupo", formaPagamento:"Cartão", totalParcelas:12, parcelasPagas:6, proximaParcela:"2026-08-20", statusPagamento:"Pendente", criadoEm: Date.now() - 20*86400000 },
   ];
 
-  // ── Supabase: autenticação unificada do painel Instituto Kaleizu ──
+  // ── Supabase: autenticação e dados do painel Instituto Kaleizu ──
   const sb = supabase.createClient(
     "https://iabugpuqlcfftwabuxsj.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhYnVncHVxbGNmZnR3YWJ1eHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTA5MTIsImV4cCI6MjA5MTY2NjkxMn0.Rs2OJlbd8_2TMroE9iehTtZLFdBImVfBpKEH-RT_3UY"
   );
 
-  const app = DEMO_MODE ? null : initializeApp(firebaseConfig);
-  const db  = DEMO_MODE ? null : getFirestore(app);
+  const TABELA = "alunos";
 
   let alunosCache = [];
   let dashCharts = {}; // instâncias Chart.js ativas do Dashboard, pra destruir e recriar a cada atualização
@@ -663,9 +641,136 @@
   let editingId = null;
   let isAdmin = false;
 
-  // ---------- AUTH (Supabase) ----------
+  // ══════════════════════════════════════════════════════════
+  // CAMADA DE DADOS (Supabase)
+  //
+  // Cada aluno é uma linha da tabela "alunos": um id + um jsonb
+  // "dados" com todos os campos. As funções abaixo mantêm a
+  // mesma assinatura que o código do app já usava, então o
+  // restante do arquivo não precisou mudar.
+  // ══════════════════════════════════════════════════════════
+  const db = null; // mantido só para as chamadas antigas continuarem válidas
+
+  function collection(_db, nome) { return { tabela: nome }; }
+
+  function doc(a, b, c) {
+    // doc(db, "alunos", id)          → referência a um aluno existente
+    // doc(collection(db, "alunos"))  → referência nova, com id já gerado
+    if (a && a.tabela) return { tabela: a.tabela, id: crypto.randomUUID(), novo: true };
+    return { tabela: b, id: c };
+  }
+
+  function query(ref) { return ref; }
+  function orderBy() { return null; }
+
+  // Separa o id do resto dos campos
+  function _separa(obj) {
+    const { id, ...dados } = obj || {};
+    return dados;
+  }
+
+  async function addDoc(ref, payload) {
+    const { data, error } = await sb
+      .from(ref.tabela)
+      .insert({ dados: _separa(payload) })
+      .select("id")
+      .single();
+    if (error) throw error;
+    await carregarAlunos();
+    return { id: data.id };
+  }
+
+  async function updateDoc(ref, patch) {
+    // Junta o patch aos dados que já estão em memória
+    const atual = alunosCache.find(a => a.id === ref.id) || {};
+    const dados = { ..._separa(atual), ..._separa(patch) };
+    const { error } = await sb
+      .from(ref.tabela)
+      .update({ dados, atualizado_em: new Date().toISOString() })
+      .eq("id", ref.id);
+    if (error) throw error;
+    await carregarAlunos();
+  }
+
+  async function deleteDoc(ref) {
+    const { error } = await sb.from(ref.tabela).delete().eq("id", ref.id);
+    if (error) throw error;
+    await carregarAlunos();
+  }
+
+  async function getDoc(ref) {
+    const { data } = await sb.from(ref.tabela).select("*").eq("id", ref.id).maybeSingle();
+    return { exists: () => !!data, data: () => (data ? data.dados : null) };
+  }
+
+  // Emula o writeBatch do Firestore acumulando as operações
+  function writeBatch() {
+    const ops = [];
+    return {
+      set(ref, dados)   { ops.push({ tipo: ref.novo ? "insert" : "upsert", ref, dados }); },
+      update(ref, patch){ ops.push({ tipo: "update", ref, dados: patch }); },
+      delete(ref)       { ops.push({ tipo: "delete", ref }); },
+      async commit() {
+        const inserir = [];
+        const remover = [];
+
+        for (const op of ops) {
+          if (op.tipo === "delete") { remover.push(op.ref.id); continue; }
+          if (op.tipo === "insert") {
+            inserir.push({ id: op.ref.id, dados: _separa(op.dados) });
+            continue;
+          }
+          // upsert / update: mescla com o que já existe
+          const atual = alunosCache.find(a => a.id === op.ref.id) || {};
+          inserir.push({
+            id: op.ref.id,
+            dados: { ..._separa(atual), ..._separa(op.dados) },
+            atualizado_em: new Date().toISOString()
+          });
+        }
+
+        if (inserir.length) {
+          const { error } = await sb.from(TABELA).upsert(inserir, { onConflict: "id" });
+          if (error) throw error;
+        }
+        if (remover.length) {
+          const { error } = await sb.from(TABELA).delete().in("id", remover);
+          if (error) throw error;
+        }
+        await carregarAlunos();
+      }
+    };
+  }
+
+  // Busca todos os alunos e redesenha a tela
+  async function carregarAlunos() {
+    const { data, error, count } = await sb
+      .from(TABELA)
+      .select("*", { count: "exact" });
+
+    if (error) { console.error("Supabase:", error); mostrarErroDados(error); return; }
+
+    console.info(`[alunos] ${(data || []).length} linha(s) recebida(s) · total na tabela: ${count}`);
+
+    if (!data || data.length === 0) {
+      mostrarErroDados({
+        vazio: true,
+        message: count === 0
+          ? "A tabela 'alunos' está vazia."
+          : `A tabela tem ${count} registro(s), mas nenhum foi devolvido — as políticas de leitura (RLS) estão bloqueando.`
+      });
+      return;
+    }
+
+    alunosCache = data
+      .map(r => ({ id: r.id, ...r.dados }))
+      .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    renderAll();
+  }
+
+  // ---------- AUTH ----------
   // Quem controla o acesso é o index.html. Aqui só lemos a sessão
-  // para exibir o e-mail e permitir o logout.
+  // para exibir o e-mail, saber se é admin e permitir o logout.
   document.getElementById("logout-btn").addEventListener("click", async () => {
     if (DEMO_MODE) { location.reload(); return; }
     await sb.auth.signOut();
@@ -685,18 +790,70 @@
     if (user) {
       isAdmin = user.user_metadata?.role === "admin";
       document.getElementById("user-email-label").textContent = user.email;
+    } else {
+      // Sem sessão: volta para o seletor, que cuida do login
+      window.location.href = "index.html";
+      return;
     }
 
-    startListening();
+    renderAll();      // desenha a estrutura já, mesmo sem dados
+    startListening(); // e atualiza quando o Firestore responder
   })();
 
-  // ---------- FIRESTORE LISTENER ----------
-  function startListening() {
-    const q = query(collection(db, "alunos"), orderBy("criadoEm", "desc"));
-    onSnapshot(q, (snap) => {
-      alunosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderAll();
-    });
+  // ---------- CARGA + TEMPO REAL ----------
+  async function startListening() {
+    await carregarAlunos();
+
+    // Se o Realtime estiver ligado na tabela, a tela se atualiza
+    // sozinha quando outra pessoa mexe nos dados.
+    try {
+      sb.channel("alunos-sync")
+        .on("postgres_changes", { event: "*", schema: "public", table: TABELA },
+            () => carregarAlunos())
+        .subscribe();
+    } catch (e) {
+      console.warn("Realtime indisponível — os dados atualizam a cada ação.", e);
+    }
+  }
+
+  // Mostra o problema na tela, em qualquer aba, em vez de deixar tudo vazio
+  function mostrarErroDados(err) {
+    const msg = (err && err.message) || "erro desconhecido";
+    const cod = (err && err.code) ? ` (${err.code})` : "";
+    const bloqueio = err && (err.vazio ? /RLS/i.test(msg) : /permission|policy|rls|denied/i.test(msg + (err.code || "")));
+
+    const titulo = err && err.vazio ? "Nenhum aluno carregado" : "Não foi possível carregar os alunos";
+    const dica = bloqueio
+      ? "Confirme no Supabase que a tabela 'alunos' existe, que o RLS está ligado e que as políticas de leitura foram criadas."
+      : "Verifique a conexão e o console do navegador para o erro completo.";
+
+    // Bloco no Dashboard
+    const kpis = document.getElementById("dash-kpis");
+    if (kpis) {
+      kpis.innerHTML = `
+        <div style="grid-column:1/-1; background:var(--card); border:1px solid rgba(224,90,90,.35);
+                    border-radius:12px; padding:20px 22px;">
+          <div style="font-size:13px; font-weight:600; color:var(--red); margin-bottom:8px;">${titulo}</div>
+          <div style="font-size:13px; color:var(--gray-text); line-height:1.6;">
+            ${msg}${cod}
+            <div style="margin-top:8px; color:var(--hint);">${dica}</div>
+          </div>
+        </div>`;
+    }
+
+    // Linha na tabela de Alunos
+    const body = document.getElementById("alunos-body");
+    if (body) {
+      const cols = document.querySelectorAll("#page-alunos thead th").length || 12;
+      body.innerHTML = `
+        <tr><td colspan="${cols}" style="padding:32px 16px; text-align:center;">
+          <div style="font-size:13px; color:var(--red); margin-bottom:6px;">${titulo}</div>
+          <div style="font-size:12px; color:var(--gray-text);">${msg}${cod}</div>
+          <div style="font-size:12px; color:var(--hint); margin-top:6px;">${dica}</div>
+        </td></tr>`;
+    }
+
+    showToast(titulo);
   }
 
   // ---------- NAVIGATION ----------
