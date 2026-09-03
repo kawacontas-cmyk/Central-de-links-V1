@@ -213,6 +213,143 @@
 
   .dash-cursos-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:24px; }
 
+  /* ---------- DASHBOARD: cards por curso ---------- */
+  .curso-card{
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; border-top:2px solid var(--gold);
+  }
+  .curso-head{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .curso-head h3{ font-size:15px; font-weight:600; color:var(--gold-light); }
+
+  .curso-kpis{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    padding-bottom:16px; border-bottom:1px solid var(--border); margin-bottom:14px;
+  }
+  .ck-label{ font-size:10px; color:var(--gray-text); font-family:var(--mono); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+  .ck-val{ font-size:22px; font-weight:500; color:var(--text); line-height:1; letter-spacing:-.5px; }
+  .ck-val.warn{ color:var(--amber); }
+
+  .curso-sec{ margin-bottom:14px; }
+  .curso-sec-t{
+    font-size:10px; font-weight:500; color:var(--gray-text); font-family:var(--mono);
+    text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .stat-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:99px; padding:4px 10px 4px 8px; font-size:12px;
+  }
+  .chip-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .chip-label{ color:var(--gray-text); }
+  .chip-val{ font-weight:600; font-family:var(--mono); }
+
+  .alerta{ border-radius:10px; padding:11px 13px; margin-bottom:10px; border:1px solid; }
+  .alerta-red{   background:rgba(224,90,90,.09);  border-color:rgba(224,90,90,.3); }
+  .alerta-amber{ background:rgba(205,160,76,.09); border-color:rgba(205,160,76,.3); }
+  .alerta-blue{  background:rgba(91,138,255,.09); border-color:rgba(91,138,255,.28); }
+  .alerta-t{ font-size:11px; font-weight:600; margin-bottom:7px; letter-spacing:.02em; }
+  .alerta-red   .alerta-t{ color:var(--red); }
+  .alerta-amber .alerta-t{ color:var(--amber); }
+  .alerta-blue  .alerta-t{ color:var(--blue); }
+  .alerta-l{
+    display:flex; justify-content:space-between; gap:10px; align-items:center;
+    font-size:12px; color:var(--text); padding:4px 0;
+    border-top:1px solid rgba(255,255,255,.05);
+  }
+  .alerta-l:first-of-type{ border-top:none; }
+  .alerta-l span:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .alerta-d{ font-family:var(--mono); font-weight:500; flex-shrink:0; }
+  .alerta-red   .alerta-d{ color:var(--red); }
+  .alerta-amber .alerta-d{ color:var(--amber); }
+  .alerta-blue  .alerta-d{ color:var(--blue); }
+  .alerta-mais{ font-size:11px; color:var(--hint); margin-top:6px; }
+  .curso-vazio{ font-size:12px; color:var(--hint); padding:4px 0; }
+
+  /* ---------- DASHBOARD: cartões por curso ---------- */
+  .curso-card{ background:var(--card); border:1px solid var(--border); border-radius:12px;
+               padding:20px 22px; border-top:2px solid var(--gold); }
+  .curso-card h3{ font-size:15px; font-weight:600; color:var(--gold-light); margin-bottom:16px; }
+
+  .curso-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+  .curso-kpis .k-label{ font-size:10px; color:var(--gray-text); text-transform:uppercase;
+                        letter-spacing:.06em; font-family:var(--mono); margin-bottom:5px; }
+  .curso-kpis .k-value{ font-size:22px; font-weight:500; line-height:1; letter-spacing:-.5px; }
+
+  .curso-sec{ border-top:1px solid var(--border); padding-top:13px; margin-bottom:13px; }
+  .curso-sec-title{ font-size:10px; font-weight:500; color:var(--gold); text-transform:uppercase;
+                    letter-spacing:.08em; font-family:var(--mono); margin-bottom:10px; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{ display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:20px;
+         font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--gray-text); }
+  .chip .dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .chip b{ font-weight:600; font-family:var(--mono); }
+
+  .alert-list{ border-radius:10px; padding:12px 14px; margin-bottom:12px; border-left:3px solid; }
+  .alert-list.danger{ background:rgba(224,90,90,.10); border-left-color:var(--red); }
+  .alert-list.warn{ background:rgba(205,160,76,.10); border-left-color:var(--gold); }
+  .alert-list-title{ font-size:11px; font-weight:600; margin-bottom:8px; display:flex;
+                     align-items:center; gap:6px; letter-spacing:.02em; }
+  .alert-list.danger .alert-list-title{ color:#f08a8a; }
+  .alert-list.warn .alert-list-title{ color:var(--gold-light); }
+  .alert-row{ display:flex; justify-content:space-between; align-items:center; gap:10px;
+              padding:4px 0; font-size:12px; color:var(--text); }
+  .alert-row .nome{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .alert-row .dias{ font-weight:600; font-family:var(--mono); font-size:11px; flex-shrink:0; }
+  .alert-list.danger .alert-row .dias{ color:#f08a8a; }
+  .alert-list.warn .alert-row .dias{ color:var(--gold-light); }
+  .alert-more{ font-size:11px; margin-top:6px; font-family:var(--mono); }
+  .alert-list.danger .alert-more{ color:rgba(240,138,138,.75); }
+  .alert-list.warn .alert-more{ color:rgba(232,201,122,.75); }
+  .curso-vazio{ font-size:12px; color:var(--hint); padding:4px 0; }
+
+  /* ---------- DASHBOARD: cards por curso ---------- */
+  .curso-card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+  .curso-card > h3{ font-size:15px; font-weight:600; color:var(--gold-light); margin-bottom:16px; }
+  .curso-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:4px; }
+  .ck-label{ font-size:10px; color:var(--gray-text); font-family:var(--mono); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+  .ck-value{ font-size:22px; font-weight:500; line-height:1; color:var(--gold-light); letter-spacing:-.5px; }
+  .ck-value.warn{ color:var(--amber); }
+  .ck-value.dim{ color:var(--text); }
+
+  .curso-sec{ border-top:1px solid var(--border); padding-top:14px; margin-top:14px; }
+  .curso-sec-t{ font-size:10px; font-family:var(--mono); color:var(--gold); text-transform:uppercase;
+                letter-spacing:.1em; margin-bottom:10px; }
+  .pill-row{ display:flex; gap:7px; flex-wrap:wrap; }
+  .pill{ display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:20px;
+         font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--gray-text); }
+  .pill .dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .pill b{ font-family:var(--mono); font-weight:500; color:var(--text); }
+  .pill.on-green{ border-color:rgba(95,205,138,.3);  background:rgba(95,205,138,.07); }
+  .pill.on-green b{ color:var(--green); }
+  .pill.on-red{   border-color:rgba(224,90,90,.32);  background:rgba(224,90,90,.07); }
+  .pill.on-red b{ color:var(--red); }
+  .pill.on-amber{ border-color:rgba(205,160,76,.32); background:rgba(205,160,76,.07); }
+  .pill.on-amber b{ color:var(--amber); }
+  .pill.on-gold{  border-color:rgba(205,160,76,.32); background:rgba(205,160,76,.07); }
+  .pill.on-gold b{ color:var(--gold-light); }
+
+  .alert{ border-radius:10px; padding:12px 14px; margin-top:14px; border:1px solid; }
+  .alert-red{   background:rgba(224,90,90,.08);  border-color:rgba(224,90,90,.28); }
+  .alert-amber{ background:rgba(205,160,76,.07); border-color:rgba(205,160,76,.26); }
+  .alert-t{ font-size:11px; font-weight:600; margin-bottom:8px; display:flex; align-items:center;
+            gap:7px; letter-spacing:.02em; }
+  .alert-red .alert-t{ color:var(--red); }
+  .alert-amber .alert-t{ color:var(--amber); }
+  .alert-t .badge-n{ font-family:var(--mono); font-weight:500; padding:1px 7px; border-radius:20px; font-size:10px; }
+  .alert-red .badge-n{ background:rgba(224,90,90,.18); color:var(--red); }
+  .alert-amber .badge-n{ background:rgba(205,160,76,.18); color:var(--amber); }
+  .alert-row{ display:flex; justify-content:space-between; align-items:center; gap:12px;
+              font-size:12px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.045); }
+  .alert-row:last-child{ border-bottom:none; }
+  .alert-row .nm{ color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .alert-row .dd{ font-family:var(--mono); font-weight:500; flex-shrink:0; }
+  .alert-red .alert-row .dd{ color:var(--red); }
+  .alert-amber .alert-row .dd{ color:var(--amber); }
+  .alert-more{ font-size:11px; font-family:var(--mono); margin-top:7px; opacity:.75; }
+  .alert-red .alert-more{ color:var(--red); }
+  .curso-none{ font-size:12px; color:var(--hint); margin-top:14px; }
+
   /* ---------- DASHBOARD: KPIs globais ---------- */
   .metric-card .sub{ font-size:11px; color:var(--hint); margin-top:4px; font-family:var(--mono); }
   .metric-card.kpi-flex{ display:flex; flex-direction:column; justify-content:space-between; }
@@ -400,11 +537,11 @@
       </div>
 
       <div id="alunos-resumo" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; color:var(--gray-text);"></div>
-      <div id="alunos-bulk-bar" style="display:none; align-items:center; gap:12px; background:var(--navy); color:var(--white); border-radius:10px; padding:10px 16px; margin-bottom:14px; font-size:13px;">
+      <div id="alunos-bulk-bar" style="display:none; align-items:center; gap:12px; background:var(--surface2); border:1px solid var(--gold); color:var(--text); border-radius:10px; padding:10px 16px; margin-bottom:14px; font-size:13px;">
         <span id="alunos-bulk-count"></span>
-        <button class="btn btn-sm" id="btn-bulk-grupo" style="background:var(--gold); border-color:var(--gold); color:var(--navy);">✓ Marcar como no grupo</button>
-        <button class="btn btn-sm btn-danger" id="btn-bulk-excluir" style="background:var(--white);">🗑 Excluir selecionados</button>
-        <button class="btn btn-sm" id="btn-bulk-limpar" style="background:transparent; color:var(--white); border-color:rgba(255,255,255,0.3);">Limpar seleção</button>
+        <button class="btn btn-sm" id="btn-bulk-grupo" style="background:var(--gold); border-color:var(--gold); color:#060B1F; font-weight:600;">✓ Marcar como no grupo</button>
+        <button class="btn btn-sm btn-danger" id="btn-bulk-excluir" style="background:rgba(224,90,90,.12); border-color:rgba(224,90,90,.4);">🗑 Excluir selecionados</button>
+        <button class="btn btn-sm" id="btn-bulk-limpar" style="background:transparent; color:var(--gray-text); border-color:var(--border);">Limpar seleção</button>
       </div>
 
       <div class="table-wrap">
@@ -1222,71 +1359,82 @@
 
           const inadimplentes30 = ativos.filter(isInadimplente30);
 
+          const chip = (cor, label, valor) => `
+            <div class="stat-chip">
+              <span class="chip-dot" style="background:${cor}"></span>
+              <span class="chip-label">${label}</span>
+              <span class="chip-val" style="color:${cor}">${valor}</span>
+            </div>`;
+
           return `
-            <div style="background:var(--white); border:1px solid var(--gray-border); border-radius:12px; padding:20px;">
-              <h3 style="font-size:16px; color:var(--navy); margin-bottom:14px;">${curso}</h3>
-              <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
-                <div><div style="font-size:11px;color:var(--gray-text);">Ativos</div><div style="font-size:20px;font-weight:700;color:var(--navy);">${ativos.length}</div></div>
-                <div><div style="font-size:11px;color:var(--gray-text);">Encerrando 30d</div><div style="font-size:20px;font-weight:700;color:var(--amber);">${encerrando.length}</div></div>
-                <div><div style="font-size:11px;color:var(--gray-text);">Lançamentos</div><div style="font-size:20px;font-weight:700;color:var(--navy);">${lancamentos.size}</div></div>
+            <div class="curso-card">
+              <div class="curso-head">
+                <h3>${curso}</h3>
               </div>
 
-              <div style="border-top:1px solid var(--gray-border); padding-top:12px; margin-bottom:12px;">
-                <div style="font-size:11px; font-weight:700; color:var(--gray-text); text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px;">Status da matrícula</div>
-                <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12px;">
-                  <span>✅ Efetivada: <b>${matEfetivada}</b></span>
-                  <span>📄 Docs pendentes: <b style="color:var(--amber);">${matDocsPendentes}</b></span>
-                  <span>⏳ Aguardando: <b>${matAguardando}</b></span>
+              <div class="curso-kpis">
+                <div><div class="ck-label">Ativos</div><div class="ck-val">${ativos.length}</div></div>
+                <div><div class="ck-label">Encerrando 30d</div><div class="ck-val ${encerrando.length ? 'warn' : ''}">${encerrando.length}</div></div>
+                <div><div class="ck-label">Lançamentos</div><div class="ck-val">${lancamentos.size}</div></div>
+              </div>
+
+              <div class="curso-sec">
+                <div class="curso-sec-t">Status da matrícula</div>
+                <div class="chip-row">
+                  ${chip('var(--green)', 'Efetivada', matEfetivada)}
+                  ${chip('var(--amber)', 'Docs pendentes', matDocsPendentes)}
+                  ${chip('var(--blue)', 'Aguardando', matAguardando)}
                 </div>
               </div>
 
-              <div style="border-top:1px solid var(--gray-border); padding-top:12px; margin-bottom:14px;">
-                <div style="font-size:11px; font-weight:700; color:var(--gray-text); text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px;">Financeiro</div>
-                <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12px;">
-                  <span>💚 Em dia: <b style="color:var(--green);">${pagEmDia}</b></span>
-                  <span>🏆 Quitados: <b style="color:var(--navy);">${pagQuitado}</b></span>
-                  <span>🔴 Atrasado: <b style="color:var(--red);">${pagAtrasado}</b></span>
-                  <span>🟡 Pendente: <b>${pagPendente}</b></span>
+              <div class="curso-sec">
+                <div class="curso-sec-t">Financeiro</div>
+                <div class="chip-row">
+                  ${chip('var(--green)', 'Em dia', pagEmDia)}
+                  ${chip('var(--teal)', 'Quitados', pagQuitado)}
+                  ${chip('var(--red)', 'Atrasado', pagAtrasado)}
+                  ${chip('var(--amber)', 'Pendente', pagPendente)}
                 </div>
               </div>
 
-              <div style="border-top:1px solid var(--gray-border); padding-top:12px; margin-bottom:14px;">
-                <div style="font-size:11px; font-weight:700; color:var(--gray-text); text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px;">Grupo do WhatsApp</div>
-                <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12px;">
-                  <span>📱 No grupo: <b style="color:var(--green);">${noGrupo}</b></span>
-                  <span>🚫 Fora do grupo: <b style="color:var(--amber);">${foraGrupo}</b></span>
+              <div class="curso-sec">
+                <div class="curso-sec-t">Grupo do WhatsApp</div>
+                <div class="chip-row">
+                  ${chip('var(--green)', 'No grupo', noGrupo)}
+                  ${chip('var(--red)', 'Fora do grupo', foraGrupo)}
                 </div>
               </div>
 
               ${inadimplentes30.length > 0 ? `
-                <div style="background:#F5E0DE; border:1px solid #E0A8A2; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
-                  <div style="font-size:11px; font-weight:700; color:var(--red); margin-bottom:4px;">🚩 Inadimplentes há mais de 30 dias (${inadimplentes30.length})</div>
+                <div class="alerta alerta-red">
+                  <div class="alerta-t">Inadimplentes há mais de 30 dias (${inadimplentes30.length})</div>
                   ${inadimplentes30.slice(0,4).map(a => {
                     const d = Math.abs(diasAte(a.proximaParcela));
-                    return `<div style="font-size:12px; display:flex; justify-content:space-between; padding:3px 0;"><span>${a.nome}</span><span style="color:var(--red);font-weight:600;">${d}d</span></div>`;
+                    return `<div class="alerta-l"><span>${a.nome}</span><span class="alerta-d">${d}d</span></div>`;
                   }).join("")}
-                  ${inadimplentes30.length > 4 ? `<div style="font-size:11px;color:var(--red);margin-top:4px;">+ ${inadimplentes30.length - 4} outro(s)</div>` : ""}
+                  ${inadimplentes30.length > 4 ? `<div class="alerta-mais">+ ${inadimplentes30.length - 4} outro(s)</div>` : ""}
                 </div>
               ` : ""}
 
               ${parcelasVencendo.length > 0 ? `
-                <div style="background:var(--red-bg); border-radius:8px; padding:10px 12px; margin-bottom:12px;">
-                  <div style="font-size:11px; font-weight:700; color:var(--red); margin-bottom:4px;">💳 Parcelas vencendo em 7 dias</div>
+                <div class="alerta alerta-amber">
+                  <div class="alerta-t">Parcelas vencendo em 7 dias</div>
                   ${parcelasVencendo.slice(0,4).map(a => {
                     const d = diasAte(a.proximaParcela);
-                    return `<div style="font-size:12px; display:flex; justify-content:space-between; padding:3px 0;"><span>${a.nome}</span><span style="color:var(--red);font-weight:600;">${d===0?"hoje":d+"d"}</span></div>`;
+                    return `<div class="alerta-l"><span>${a.nome}</span><span class="alerta-d">${d===0?"hoje":d+"d"}</span></div>`;
                   }).join("")}
                 </div>
               ` : ""}
 
               ${encerrando.length > 0 ? `
-                <div style="background:var(--amber-bg); border-radius:8px; padding:10px 12px;">
+                <div class="alerta alerta-blue">
+                  <div class="alerta-t">Turmas encerrando em 30 dias</div>
                   ${encerrando.slice(0,4).map(a => {
                     const d = diasAte(a.dataFim);
-                    return `<div style="font-size:12px; display:flex; justify-content:space-between; padding:3px 0;"><span>${a.nome}</span><span style="color:var(--amber);font-weight:600;">${d===0?"hoje":d+"d"}</span></div>`;
+                    return `<div class="alerta-l"><span>${a.nome}</span><span class="alerta-d">${d===0?"hoje":d+"d"}</span></div>`;
                   }).join("")}
                 </div>
-              ` : `<div style="font-size:12px;color:var(--gray-text);">Nenhum encerramento próximo.</div>`}
+              ` : `<div class="curso-vazio">Nenhum encerramento próximo.</div>`}
             </div>
           `;
         }).join("") + `</div>`;
@@ -1785,7 +1933,7 @@
     container.innerHTML = grupos.map((g, gi) => {
       const { merged } = mesclarCampos(g);
       return `
-        <div style="background:var(--white); border:1px solid var(--gray-border); border-radius:10px; padding:18px 20px; margin-bottom:14px;">
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div>
               <strong>${merged.nome}</strong>
