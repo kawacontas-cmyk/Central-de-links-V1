@@ -64,6 +64,54 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:20px}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
 .chart-title{font-size:10px;font-family:var(--mono);color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+
+/* ── área de gráficos ── */
+.charts-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;align-items:start}
+.charts-area .card-wide{grid-column:span 2}
+@media (max-width:1100px){ .charts-area .card-wide{grid-column:span 1} }
+
+.chart-head{margin-bottom:14px}
+.chart-head .chart-title{margin-bottom:3px}
+.chart-meta{font-size:11px;color:var(--hint);font-family:var(--mono)}
+
+/* ── legendas compartilhadas ── */
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sl-lbl{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-pct{color:var(--text);font-family:var(--mono);font-size:11px;font-weight:500}
+.sl-n{color:var(--hint);font-family:var(--mono);font-size:11px;min-width:42px;text-align:right}
+
+/* ── 2 categorias: barra de proporção ── */
+.split-bar{display:flex;height:32px;border-radius:6px;overflow:hidden;margin-bottom:14px}
+.split-bar>div{transition:width .3s}
+.split-legend{display:flex;flex-direction:column;gap:7px}
+.split-legend>div{display:flex;align-items:center;gap:8px;font-size:12px}
+
+/* ── rosca ── */
+.donut-wrap{position:relative;height:190px;margin-bottom:14px}
+.donut-legend{display:flex;flex-direction:column;gap:6px}
+.donut-legend>div{display:flex;align-items:center;gap:8px;font-size:12px}
+
+/* ── ranking de barras ── */
+.bar-list-v{display:flex;flex-direction:column;gap:11px}
+.bar-row{display:flex;flex-direction:column;gap:5px}
+.bar-head{display:flex;align-items:baseline;gap:10px;font-size:12px}
+.bar-lbl{color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-num{font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap;flex-shrink:0}
+.bar-num i{color:var(--hint);font-style:normal;margin-left:3px}
+.bar-track{height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .35s ease}
+
+.bar-outros{padding-top:9px;border-top:1px dashed var(--border);margin-top:3px}
+.bar-outros .bar-lbl{color:var(--muted)}
+.bar-toggle{background:none;border:none;color:var(--gold);font-size:11px;font-family:var(--font);
+  cursor:pointer;padding:4px 0 0;text-align:left;align-self:flex-start}
+.bar-toggle:hover{text-decoration:underline}
+.cauda{display:none;flex-direction:column;gap:3px;margin-top:6px;max-height:190px;overflow-y:auto;
+  padding:8px 10px;background:var(--surface);border-radius:6px}
+.cauda.open{display:flex}
+.cauda-l{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);padding:2px 0}
+.cauda-l span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cauda-l span:last-child{font-family:var(--mono);color:var(--hint);flex-shrink:0}
 .bar-list{display:flex;flex-direction:column;gap:7px}
 .bar-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .bar-key{width:85px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;font-size:11px}
@@ -367,11 +415,13 @@ async function renderSheet(id) {
   // Colunas abertas (texto livre) — excluídas dos gráficos
   const OPEN_COLS = new Set(['Email','Telefone','Nome','_id','_criado']);
 
+  const perguntas = cols.filter(c => !OPEN_COLS.has(c)).length;
+
   main.innerHTML = `
     <div class="page-header">
       <div>
         <div class="page-title">${id} <span class="badge badge-${sheet.tipo==='Captação'?'cap':'alu'}">${sheet.tipo}</span></div>
-        <div class="page-sub">${rows.length.toLocaleString('pt-BR')} respostas</div>
+        <div class="page-sub">${rows.length.toLocaleString('pt-BR')} respostas · ${perguntas} perguntas fechadas</div>
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="openImportCSV('${id.replace(/'/g,"\\'")}')">&#8593; Importar CSV</button>
@@ -380,88 +430,162 @@ async function renderSheet(id) {
       </div>
     </div>
     <div id="sheetStats" style="margin-bottom:20px"></div>
-    <div id="chartsArea" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px"></div>`;
+    <div id="chartsArea" class="charts-area"></div>`;
 
   renderSheetStats(rows);
-  renderPieCharts(cols, rows, OPEN_COLS);
+  renderCharts(cols, rows, OPEN_COLS);
 }
 
-function renderPieCharts(cols, rows, openCols) {
-  const PALETTE = [
-    '#c9a84c','#7cc4a8','#e05a5a','#5b8aff','#e8c97a',
-    '#a98bff','#f07ab0','#5fcd8a','#ffb94a','#7a83a8',
-    '#4dc9f6','#f67019','#f53794','#537bc4','#acc236'
-  ];
+const PALETTE = [
+  '#c9a84c','#7cc4a8','#5b8aff','#e05a5a','#a98bff',
+  '#e8c97a','#5fcd8a','#f07ab0','#4dc9f6','#ffb94a'
+];
+const COR_OUTROS = '#4a5170';
+const TOP_N = 8;   // quantas categorias mostrar antes de agrupar
+const MIN_PCT = 1; // abaixo disso vai para "Outros"
 
+// Escolhe a visualização pelo número de respostas distintas:
+// 2 → barra de proporção · 3 a 5 → rosca · 6+ → ranking de barras
+function renderCharts(cols, rows, openCols) {
   const area = document.getElementById('chartsArea');
+  area.innerHTML = '';
   const closedCols = cols.filter(c => !openCols.has(c));
 
   closedCols.forEach((col, idx) => {
-    // Conta valores únicos
     const freq = {};
+    let respondidas = 0;
     rows.forEach(r => {
       const v = (r[col]||'').toString().trim();
-      if (v && v !== 'nan' && v !== '—') freq[v] = (freq[v]||0) + 1;
+      if (v && v !== 'nan' && v !== '—') { freq[v] = (freq[v]||0)+1; respondidas++; }
     });
-    const entries = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
-    if (!entries.length) return;
+    const todas = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+    if (!todas.length) return;
 
-    const canvasId = `chart-${idx}`;
+    const total = respondidas;
+    const distintas = todas.length;
+    const semResposta = rows.length - respondidas;
+
     const card = document.createElement('div');
     card.className = 'chart-card';
-    card.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+    if (distintas > 5) card.classList.add('card-wide');
+
+    const meta = distintas > 5
+      ? `${distintas} respostas distintas`
+      : `${total.toLocaleString('pt-BR')} respostas`;
+
     card.innerHTML = `
-      <div class="chart-title">${col}</div>
-      <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center">
-        <canvas id="${canvasId}"></canvas>
+      <div class="chart-head">
+        <div class="chart-title">${col}</div>
+        <div class="chart-meta">${meta}${semResposta ? ` · ${semResposta} em branco` : ''}</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px" id="legend-${idx}"></div>`;
+      <div class="chart-body" id="body-${idx}"></div>`;
     area.appendChild(card);
 
-    const total = entries.reduce((s,[,v])=>s+v,0);
-    const labels = entries.map(([k])=>k);
-    const data   = entries.map(([,v])=>v);
-    const colors = entries.map((_,i)=>PALETTE[i%PALETTE.length]);
+    const body = card.querySelector(`#body-${idx}`);
 
-    // Legenda
-    const leg = card.querySelector(`#legend-${idx}`);
-    entries.forEach(([k,v],i)=>{
-      const pct = Math.round(v/total*100);
-      leg.innerHTML += `<div style="display:flex;align-items:center;gap:8px;font-size:11px">
-        <span style="width:10px;height:10px;border-radius:50%;background:${colors[i]};flex-shrink:0"></span>
-        <span style="color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${k}">${k}</span>
-        <span style="color:var(--text);font-family:var(--mono)">${pct}%</span>
-        <span style="color:var(--hint);font-family:var(--mono)">${v.toLocaleString('pt-BR')}</span>
-      </div>`;
-    });
+    if (distintas === 2)      desenhaProporcao(body, todas, total);
+    else if (distintas <= 5)  desenhaRosca(body, todas, total, idx);
+    else                      desenhaRanking(body, todas, total);
+  });
+}
 
-    // Chart.js
-    requestAnimationFrame(()=>{
-      const ctx = document.getElementById(canvasId);
-      if (!ctx) return;
-      new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels, datasets:[{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#0f1428', hoverOffset: 6 }]},
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '60%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const pct = Math.round(ctx.parsed/total*100);
-                  return ` ${ctx.parsed.toLocaleString('pt-BR')} (${pct}%)`;
-                }
-              }
-            }
-          }
-        }
-      });
+// ── 2 categorias: uma barra dividida ──
+function desenhaProporcao(el, entries, total) {
+  const [a, b] = entries;
+  const pa = a[1]/total*100, pb = b[1]/total*100;
+  el.innerHTML = `
+    <div class="split-bar">
+      <div style="width:${pa}%;background:${PALETTE[0]}"></div>
+      <div style="width:${pb}%;background:${PALETTE[1]}"></div>
+    </div>
+    <div class="split-legend">
+      <div><span class="dot" style="background:${PALETTE[0]}"></span>
+        <span class="sl-lbl">${a[0]}</span>
+        <span class="sl-pct">${Math.round(pa)}%</span>
+        <span class="sl-n">${a[1].toLocaleString('pt-BR')}</span></div>
+      <div><span class="dot" style="background:${PALETTE[1]}"></span>
+        <span class="sl-lbl">${b[0]}</span>
+        <span class="sl-pct">${Math.round(pb)}%</span>
+        <span class="sl-n">${b[1].toLocaleString('pt-BR')}</span></div>
+    </div>`;
+}
+
+// ── 3 a 5 categorias: rosca ──
+function desenhaRosca(el, entries, total, idx) {
+  const canvasId = `donut-${idx}`;
+  el.innerHTML = `
+    <div class="donut-wrap"><canvas id="${canvasId}"></canvas></div>
+    <div class="donut-legend">${
+      entries.map(([k,v],i)=>`
+        <div><span class="dot" style="background:${PALETTE[i%PALETTE.length]}"></span>
+          <span class="sl-lbl" title="${k}">${k}</span>
+          <span class="sl-pct">${Math.round(v/total*100)}%</span>
+          <span class="sl-n">${v.toLocaleString('pt-BR')}</span></div>`).join('')
+    }</div>`;
+
+  requestAnimationFrame(()=>{
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels: entries.map(e=>e[0]),
+             datasets:[{ data: entries.map(e=>e[1]),
+                         backgroundColor: entries.map((_,i)=>PALETTE[i%PALETTE.length]),
+                         borderWidth:2, borderColor:'#0f1428', hoverOffset:5 }]},
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ label: c => ` ${c.parsed.toLocaleString('pt-BR')} (${Math.round(c.parsed/total*100)}%)` }}}}
     });
   });
 }
+
+// ── 6+ categorias: ranking de barras com cauda agrupada ──
+function desenhaRanking(el, entries, total) {
+  const principais = [];
+  const cauda = [];
+  entries.forEach((e, i) => {
+    const pct = e[1]/total*100;
+    if (i < TOP_N && pct >= MIN_PCT) principais.push(e); else cauda.push(e);
+  });
+  // garante ao menos 3 barras mesmo quando tudo é muito pulverizado
+  while (principais.length < 3 && cauda.length) principais.push(cauda.shift());
+
+  const somaCauda = cauda.reduce((s,[,v])=>s+v, 0);
+  const maior = principais[0][1];
+
+  const barra = ([k,v], i) => {
+    const pct = v/total*100;
+    return `
+      <div class="bar-row">
+        <div class="bar-head">
+          <span class="bar-lbl" title="${k}">${k}</span>
+          <span class="bar-num">${pct<1?'<1':Math.round(pct)}% <i>${v.toLocaleString('pt-BR')}</i></span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${v/maior*100}%;background:${PALETTE[i%PALETTE.length]}"></div></div>
+      </div>`;
+  };
+
+  let html = principais.map(barra).join('');
+
+  if (cauda.length) {
+    const pctCauda = somaCauda/total*100;
+    html += `
+      <div class="bar-row bar-outros">
+        <div class="bar-head">
+          <span class="bar-lbl">Outros · ${cauda.length} categorias</span>
+          <span class="bar-num">${pctCauda<1?'<1':Math.round(pctCauda)}% <i>${somaCauda.toLocaleString('pt-BR')}</i></span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${somaCauda/maior*100}%;background:${COR_OUTROS}"></div></div>
+        <button class="bar-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'ocultar':'ver todas'">ver todas</button>
+        <div class="cauda">${
+          cauda.map(([k,v])=>`<div class="cauda-l"><span title="${k}">${k}</span><span>${v.toLocaleString('pt-BR')}</span></div>`).join('')
+        }</div>
+      </div>`;
+  }
+
+  el.innerHTML = `<div class="bar-list-v">${html}</div>`;
+}
+
 function renderSheetStats(rows) {
   const el = document.getElementById('sheetStats'); if(!el) return;
   const f=rows.filter(r=>r['Sexo']==='Feminino').length;
