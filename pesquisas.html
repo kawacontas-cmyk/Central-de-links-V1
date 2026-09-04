@@ -48,6 +48,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .lanc-acoes{display:flex;gap:6px}
 .lanc-acoes .btn{flex:1;justify-content:center}
 .btn-sm{padding:6px 10px;font-size:11px}
+.check-line{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text);
+  cursor:pointer;margin-bottom:4px}
+.check-line input{margin-top:2px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+.check-hint{font-size:11px;color:var(--hint);margin:0 0 12px 22px}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
 .page-title{font-size:20px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:10px}
 .page-sub{font-size:12px;color:var(--muted);margin-top:4px}
@@ -137,13 +141,10 @@ const SEED_SHEETS = [{"id": "L1KR - Captação", "tipo": "Captação", "total": 
 const SEED_ANALYTICS = {"total": 10096, "cap": 9990, "alu": 106, "lancamentos": 18, "regiao": {"Sudeste": 4999, "Sul": 1841, "Nordeste": 1583, "Centro-Oeste": 896, "Norte": 574, "Outros": 203}, "sexo": {"Feminino": 8069, "Masculino": 2027}, "faixa": {"25 a 34 anos": 2807, "35 a 44 anos": 2355, "45 a 54 anos": 2047, "Menos de 25 anos": 1911, "55 anos ou mais": 976}, "nicho": {"Pequenos Animais": 8352, "Emergências e Cuidados Intensivos": 581, "Outros subnichos": 449, "Grandes Animais": 258, "Animais Selvagens e Exóticos": 215, "Preventiva": 86, "Medicina Veterinária de Produção Animal": 75, "Veterinária Legal e Forense": 42, "Ciências Veterinárias Aplicadas": 24, "Animais Aquáticos": 14}, "conhece": {"Conhecendo agora": 3912, "Mais de 6 meses": 3753, "Menos de 6 meses": 1577, "Outros": 498}};
 
 let sheets = [];
-let currentView = 'overview';
-let currentSheet = null;
-let page = 1;
-const PER = 25;
-let fSearch = '', fSexo = '', fRegiao = '', fFaixa = '';
 let rowsCache = {};
 let colsCache = {};
+let csvParsed = [];
+let csvNomeArquivo = '';
 
 function toast(msg, type='') {
   const el = document.getElementById('toast');
@@ -285,10 +286,29 @@ async function exportCSV(id) {
 
 function openImportCSV(sheetId) {
   openModal('Importar CSV',
-    `<p style="font-size:12px;color:var(--muted);margin-bottom:12px">O CSV deve ter cabeçalho na primeira linha. Colunas mapeadas automaticamente.</p>
+    `<p style="font-size:12px;color:var(--muted);margin-bottom:12px">O CSV precisa ter o cabeçalho na primeira linha. As colunas são mapeadas automaticamente.</p>
     <div class="field"><label>Lançamento de destino</label>
-      <select id="import-sheet">${sheets.map(s=>`<option value="${s.id}"${s.id===sheetId?' selected':''}>${s.id} — ${s.tipo}</option>`).join('')}</select>
+      <select id="import-sheet" onchange="onDestinoChange()">
+        <option value="__novo__">— criar novo lançamento —</option>
+        ${sheets.map(s=>`<option value="${s.id}"${s.id===sheetId?' selected':''}>${s.id} — ${s.total.toLocaleString('pt-BR')} respostas</option>`).join('')}
+      </select>
     </div>
+
+    <div id="blocoNovo" style="display:none">
+      <div class="field"><label>Nome do lançamento</label>
+        <input type="text" id="novo-nome" placeholder="Ex: L21KR - Captação"></div>
+      <div class="field"><label>Tipo</label>
+        <select id="novo-tipo"><option>Captação</option><option>Alunos</option></select></div>
+    </div>
+
+    <div id="blocoSubstituir" style="display:none">
+      <label class="check-line">
+        <input type="checkbox" id="import-substituir">
+        <span>Substituir as respostas que já existem neste lançamento</span>
+      </label>
+      <p class="check-hint">Deixe desmarcado para somar as novas respostas às atuais.</p>
+    </div>
+
     <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvInput').click()"
       ondragover="event.preventDefault();this.classList.add('drag')"
       ondragleave="this.classList.remove('drag')"
@@ -300,28 +320,55 @@ function openImportCSV(sheetId) {
     <div id="importPreview"></div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
      <button class="btn btn-primary" id="btnImport" style="display:none" onclick="confirmImport()">Importar para o banco</button>`);
+  onDestinoChange();
 }
-let csvParsed=[];
-function handleDrop(e){e.preventDefault();document.getElementById('uploadArea').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handleCSVFile(f);}
+
+function onDestinoChange() {
+  const v = document.getElementById('import-sheet').value;
+  const novo = v === '__novo__';
+  document.getElementById('blocoNovo').style.display = novo ? 'block' : 'none';
+  document.getElementById('blocoSubstituir').style.display = novo ? 'none' : 'block';
+  if (novo) {
+    const nome = document.getElementById('novo-nome');
+    if (!nome.value && csvNomeArquivo) nome.value = sugereNome(csvNomeArquivo);
+  }
+}
+
+// Tenta adivinhar o nome a partir do arquivo (ex: "..._L21KR__..." → "L21KR - Captação")
+function sugereNome(arquivo) {
+  const m = arquivo.match(/L\d+KR/i);
+  return m ? m[0].toUpperCase() + ' - Captação' : '';
+}
+
 function handleCSVFile(file) {
   if(!file) return;
+  csvNomeArquivo = file.name;
   const reader=new FileReader();
   reader.onload=e=>{
     csvParsed=parseCSV(e.target.result);
-    document.getElementById('uploadPreview').textContent=file.name+' — '+csvParsed.length+' linhas';
+    if(!csvParsed.length){ toast('Não consegui ler nenhuma linha desse arquivo.','error'); return; }
+
+    document.getElementById('uploadPreview').textContent =
+      file.name + ' — ' + csvParsed.length.toLocaleString('pt-BR') + ' respostas';
+
+    const nome = document.getElementById('novo-nome');
+    if (nome && !nome.value) nome.value = sugereNome(file.name);
+
     const cols=Object.keys(csvParsed[0]||{});
     const prev=csvParsed.slice(0,3);
     document.getElementById('importPreview').innerHTML=`
-      <p style="font-size:11px;color:var(--muted);margin:10px 0 6px">Prévia:</p>
+      <p style="font-size:11px;color:var(--muted);margin:10px 0 6px">${cols.length} colunas · prévia das 3 primeiras linhas:</p>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r)">
         <table style="width:100%;border-collapse:collapse;font-size:11px">
           <thead><tr>${cols.map(c=>`<th style="padding:5px 8px;color:var(--gold);background:var(--surface);text-align:left;white-space:nowrap">${c}</th>`).join('')}</tr></thead>
-          <tbody>${prev.map(r=>`<tr>${cols.map(c=>`<td style="padding:4px 8px;border-top:1px solid var(--border)">${r[c]||''}</td>`).join('')}</tr>`).join('')}</tbody>
+          <tbody>${prev.map(r=>`<tr>${cols.map(c=>`<td style="padding:4px 8px;border-top:1px solid var(--border);white-space:nowrap">${(r[c]||'').slice(0,40)}</td>`).join('')}</tr>`).join('')}</tbody>
         </table></div>`;
     document.getElementById('btnImport').style.display='inline-block';
   };
   reader.readAsText(file,'UTF-8');
 }
+
+function handleDrop(e){e.preventDefault();document.getElementById('uploadArea').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handleCSVFile(f);}
 function parseCSV(text) {
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
   if(lines.length<2) return [];
@@ -335,16 +382,56 @@ function splitLine(line) {
 }
 async function confirmImport() {
   if(!csvParsed.length) return;
-  const id=document.getElementById('import-sheet').value;
-  const btn=document.getElementById('btnImport');
+  const btn = document.getElementById('btnImport');
+  const destino = document.getElementById('import-sheet').value;
+  const criarNovo = destino === '__novo__';
+  const cols = Object.keys(csvParsed[0]||{});
+
+  let id = destino;
+  if (criarNovo) {
+    id = (document.getElementById('novo-nome').value||'').trim();
+    if (!id) { toast('Dê um nome ao lançamento.','error'); return; }
+    if (sheets.some(s=>s.id===id)) { toast('Já existe um lançamento com esse nome.','error'); return; }
+  }
+
+  const substituir = !criarNovo && document.getElementById('import-substituir').checked;
+  const atual = sheets.find(s=>s.id===id);
+  if (substituir && atual && atual.total) {
+    if (!confirm(`Isso apaga as ${atual.total.toLocaleString('pt-BR')} respostas atuais de ${id} e coloca as ${csvParsed.length.toLocaleString('pt-BR')} do arquivo no lugar.\n\nConfirmar?`)) return;
+  }
+
   btn.textContent='Importando...'; btn.disabled=true;
   try {
-    const batch=500;
-    for(let i=0;i<csvParsed.length;i+=batch) await insertRows(id,csvParsed.slice(i,i+batch));
+    if (criarNovo) {
+      await createLancamento(id, document.getElementById('novo-tipo').value, cols);
+      sheets.push({ id, tipo: document.getElementById('novo-tipo').value, total: 0, cols });
+    } else {
+      // guarda as colunas do arquivo para a exportação sair completa
+      await sb.from('lancamentos').update({ cols }).eq('id', id);
+      const s = sheets.find(x=>x.id===id); if (s) s.cols = cols;
+    }
+
+    if (substituir) {
+      const { error } = await sb.from('respostas').delete().eq('lancamento_id', id);
+      if (error) throw error;
+      await sb.from('lancamentos').update({ total: 0 }).eq('id', id);
+      const s = sheets.find(x=>x.id===id); if (s) s.total = 0;
+    }
+
+    const lote = 500;
+    for (let i=0; i<csvParsed.length; i+=lote) {
+      await insertRows(id, csvParsed.slice(i, i+lote));
+      btn.textContent = `Importando... ${Math.min(i+lote, csvParsed.length)}/${csvParsed.length}`;
+    }
+
     closeModal();
-    toast(csvParsed.length.toLocaleString('pt-BR')+' respostas importadas!');
-    sheets = await fetchSheets(); renderLancamentos();
-  } catch(e){toast('Erro: '+e.message,'error');btn.textContent='Importar para o banco';btn.disabled=false;}
+    toast(csvParsed.length.toLocaleString('pt-BR')+' respostas importadas em '+id+'!');
+    sheets = await fetchSheets();
+    renderLancamentos();
+  } catch(e) {
+    toast('Erro: '+e.message,'error');
+    btn.textContent='Importar para o banco'; btn.disabled=false;
+  }
 }
 
 function openNewLancamento() {
