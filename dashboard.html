@@ -80,6 +80,39 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 /* SECTION LABEL */
 .section-label { font-size: 10px; font-family: var(--mono); color: var(--gold); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
 
+/* ── investimento por fase ── */
+.inv-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 20px 22px; margin-bottom: 20px; border-top: 2px solid var(--gold); }
+.inv-head { display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.inv-lanc { font-size: 15px; font-weight: 500; color: var(--gold-light); }
+.inv-data { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+.inv-total { text-align: right; }
+.inv-total-lbl { font-size: 10px; color: var(--muted); font-family: var(--mono);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.inv-total-val { font-size: 24px; font-weight: 500; color: var(--text); line-height: 1; letter-spacing: -.5px; }
+
+.inv-barra { display: flex; height: 10px; border-radius: 5px; overflow: hidden;
+  margin-bottom: 20px; background: rgba(255,255,255,.05); }
+.inv-barra > div { transition: width .3s; }
+
+.inv-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+.inv-item-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; }
+.inv-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; align-self: center; }
+.inv-nome { font-size: 13px; color: var(--text); flex: 1; }
+.inv-pct { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.inv-val { font-size: 12px; color: var(--text); font-family: var(--mono); font-weight: 500; }
+.inv-track { height: 6px; background: rgba(255,255,255,.05); border-radius: 3px; overflow: hidden; }
+.inv-fill { height: 100%; border-radius: 3px; transition: width .35s ease; }
+.inv-desc { font-size: 11px; color: var(--hint); margin-top: 6px; line-height: 1.45; }
+
+.inv-rodape { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.inv-rodape > div { display: flex; flex-direction: column; gap: 3px; }
+.inv-rodape span { font-size: 10px; color: var(--muted); font-family: var(--mono);
+  text-transform: uppercase; letter-spacing: .05em; }
+.inv-rodape strong { font-size: 14px; font-weight: 500; color: var(--text); }
+
 @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } .main { padding: 16px 12px 40px; } }
 </style>
 </head>
@@ -122,6 +155,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   <div class="section-label">KPIs consolidados</div>
   <div class="kpi-grid" id="kpiGrid"></div>
 
+  <div id="investBloco" style="display:none">
+    <div class="section-label">Investimento por fase</div>
+    <div class="inv-card" id="investCard"></div>
+  </div>
+
   <div class="section-label">Gráficos</div>
   <div class="charts-grid">
     <div class="chart-card">
@@ -130,7 +168,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
       <div class="chart-wrap"><canvas id="chartReceita" role="img" aria-label="Receita bruta por lançamento"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Leads e CPL por lançamento</div>
+      <div class="chart-title">Leads totais e CPL de tráfego por lançamento</div>
       <div class="chart-legend" id="legend2"></div>
       <div class="chart-wrap"><canvas id="chartLeads" role="img" aria-label="Leads e CPL por lançamento"></canvas></div>
     </div>
@@ -151,7 +189,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
     <table id="tabela">
       <thead>
         <tr>
-          <th>Lanç.</th><th>Produto</th><th>Data</th><th>Leads</th><th>Invest.</th><th>CPL Total</th><th>Vendas</th><th>Receita bruta</th><th>CAC</th><th>ROAS</th><th>Conv. total</th><th>Tx. captura</th>
+          <th>Lanç.</th><th>Produto</th><th>Data</th><th>Leads</th><th>Invest.</th><th>CPL tráfego</th><th>Vendas</th><th>Receita bruta</th><th>CAC</th><th>ROAS</th><th>Conv. total</th><th>Tx. captura</th>
         </tr>
       </thead>
       <tbody id="tabelaBody"></tbody>
@@ -170,19 +208,21 @@ async function doLogout() { await sb.auth.signOut(); window.location.href = "ind
 
 // ── DATA ──────────────────────────────────────────────
 const ALL_DATA = [
-  { id:'L4KR',  prod:'cardio',  data:'17/02/2025', invest:0,        leads:201,  cplTrafico:0,     cplTotal:0,     vendas:37,  receita:259000,  cac:0,       roas:null,  convTotal:0.184080, txCaptura:0.200000 },
-  { id:'L5KR',  prod:'cardio',  data:'10/03/2025', invest:29559.21, leads:2304, cplTrafico:25.62, cplTotal:11.75, vendas:56,  receita:559440,  cac:527.84,  roas:null,  convTotal:0.024306, txCaptura:0.041979 },
-  { id:'L6KR',  prod:'cardio',  data:'28/04/2025', invest:48451.01, leads:4417, cplTrafico:12.19, cplTotal:9.58,  vendas:12,  receita:119880,  cac:4037.58, roas:null,  convTotal:0.002717, txCaptura:0.002990 },
-  { id:'L8KR',  prod:'cardio',  data:'21/05/2025', invest:9570.45,  leads:212,  cplTrafico:37.04, cplTotal:37.04, vendas:2,   receita:19980,   cac:4785.23, roas:null,  convTotal:0.009434, txCaptura:0.015152 },
-  { id:'L10KR', prod:'cardio',  data:'23/07/2025', invest:28233.36, leads:2086, cplTrafico:26.60, cplTotal:12.32, vendas:23,  receita:229770,  cac:1227.54, roas:null,  convTotal:0.011026, txCaptura:0.023023 },
-  { id:'L13KR', prod:'cardio',  data:'05/11/2025', invest:40346.04, leads:1866, cplTrafico:46.78, cplTotal:18.83, vendas:123, receita:613770,  cac:328.02,  roas:null,  convTotal:0.065916, txCaptura:0.132829 },
-  { id:'L15KR', prod:'cardio',  data:'09/02/2026', invest:47215.37, leads:2951, cplTrafico:28.29, cplTotal:13.39, vendas:34,  receita:285907,  cac:1388.69, roas:null,  convTotal:0.011522, txCaptura:0.025335 },
-  { id:'L17KR', prod:'cardio',  data:'13/04/2026', invest:50928.79, leads:3022, cplTrafico:34.32, cplTotal:16.17, vendas:32,  receita:255680,  cac:1591.52, roas:null,  convTotal:0.010589, txCaptura:0.021651 },
-  { id:'L7KR',  prod:'clinica', data:'19/05/2025', invest:27213,    leads:1521, cplTrafico:36.38, cplTotal:15.74, vendas:56,  receita:279440,  cac:485.95,  roas:10.27, convTotal:0.036818, txCaptura:0.068627 },
-  { id:'L11KR', prod:'clinica', data:'08/09/2025', invest:30383,    leads:793,  cplTrafico:37.31, cplTotal:31.48, vendas:51,  receita:152490,  cac:595.75,  roas:5.02,  convTotal:0.064313, txCaptura:0.075110 },
-  { id:'L14KR', prod:'clinica', data:'12/01/2026', invest:39762.97, leads:1836, cplTrafico:30.78, cplTotal:13.59, vendas:72,  receita:215280,  cac:552.26,  roas:5.41,  convTotal:0.039216, txCaptura:0.071500 },
-  { id:'L16KR', prod:'clinica', data:'17/02/2026', invest:55523.75, leads:3261, cplTrafico:33.19, cplTotal:15.08, vendas:81,  receita:242190,  cac:685.48,  roas:4.36,  convTotal:0.024839, txCaptura:0.056802 },
-  { id:'L18KR', prod:'clinica', data:'11/05/2026', invest:36521.56, leads:857,  cplTrafico:46.79, cplTotal:36.96, vendas:42,  receita:125580,  cac:869.56,  roas:3.44,  convTotal:0.049008, txCaptura:0.058989 },
+  { id:'L4KR', prod:'cardio', data:'17/02/2025', invest:0, leads:201, cplTrafico:0, cplTotal:0, vendas:37, receita:259000, cac:0, roas:null, convTotal:0.18408, vendas1Dia:24, grupoLancTaxa:0.920398, pesquisaTaxa:1, convWhats:0.2, inv:{cap:0, lem:0, car:0, out:0} },
+  { id:'L5KR', prod:'cardio', data:'10/03/2025', invest:29559.21, leads:1248, cplTrafico:25.618467, cplTotal:21.697692, vendas:56, receita:559440, cac:527.843036, roas:18.926081, convTotal:0.044872, vendas1Dia:37, grupoLancTaxa:1.06891, pesquisaTaxa:0.375, convWhats:0.041979, inv:{cap:27078.72, lem:2045.46, car:435.03, out:0} },
+  { id:'L6KR', prod:'cardio', data:'28/04/2025', invest:48451.01, leads:4417, cplTrafico:12.188373, cplTotal:9.583477, vendas:12, receita:119880, cac:4037.584167, roas:2.474252, convTotal:0.002717, vendas1Dia:null, grupoLancTaxa:0.908762, pesquisaTaxa:0.690967, convWhats:0.00299, inv:{cap:42330.22, lem:3329.2, car:2791.59, out:0} },
+  { id:'L7KR', prod:'clinica', data:'19/05/2025', invest:27213, leads:863, cplTrafico:36.375729, cplTotal:null, vendas:56, receita:279440, cac:485.946429, roas:10.268622, convTotal:0.06489, vendas1Dia:null, grupoLancTaxa:0.945539, pesquisaTaxa:0.771727, convWhats:0.068627, inv:{cap:23935.23, lem:2462.14, car:816.06, out:0} },
+  { id:'L8KR', prod:'cardio', data:'21/05/2025', invest:9570.45, leads:212, cplTrafico:37.043396, cplTotal:37.043396, vendas:2, receita:19980, cac:4785.225, roas:2.087676, convTotal:0.009434, vendas1Dia:null, grupoLancTaxa:0.622642, pesquisaTaxa:0.419811, convWhats:0.015152, inv:{cap:7853.2, lem:1157.01, car:560.24, out:0} },
+  { id:'L10KR', prod:'cardio', data:'23/07/2025', invest:28233.36, leads:1120, cplTrafico:26.603458, cplTotal:22.945482, vendas:23, receita:229770, cac:1227.537391, roas:8.138245, convTotal:0.020536, vendas1Dia:11, grupoLancTaxa:0.891964, pesquisaTaxa:0.813393, convWhats:0.023023, inv:{cap:25698.94, lem:1106.72, car:1427.7, out:0} },
+  { id:'L11KR', prod:'clinica', data:'08/09/2025', invest:30383, leads:793, cplTrafico:37.309507, cplTotal:null, vendas:51, receita:152490, cac:595.745098, roas:5.018925, convTotal:0.064313, vendas1Dia:null, grupoLancTaxa:0.856242, pesquisaTaxa:0.680958, convWhats:0.07511, inv:{cap:24960.06, lem:2293.42, car:3129.88, out:0} },
+  { id:'L13KR', prod:'cardio', data:'05/11/2025', invest:40346.04, leads:1115, cplTrafico:46.775153, cplTotal:31.505058, vendas:123, receita:613770, cac:328.016585, roas:15.212645, convTotal:0.110314, vendas1Dia:53, grupoLancTaxa:0.830493, pesquisaTaxa:0.251121, convWhats:0.132829, inv:{cap:35128.14, lem:1157.11, car:3881.01, out:179.78} },
+  { id:'L14KR', prod:'clinica', data:'12/01/2026', invest:39762.97, leads:1024, cplTrafico:46.052478, cplTotal:null, vendas:72, receita:215280, cac:552.263472, roas:5.414082, convTotal:0.070312, vendas1Dia:null, grupoLancTaxa:0.983398, pesquisaTaxa:0.06543, convWhats:0.0715, inv:{cap:37348.56, lem:700, car:1714.41, out:0} },
+  { id:'L15KR', prod:'cardio', data:'09/02/2026', invest:47215.37, leads:1554, cplTrafico:28.288325, cplTotal:25.430367, vendas:34, receita:285907, cac:1388.687353, roas:6.05538, convTotal:0.021879, vendas1Dia:15, grupoLancTaxa:0.863578, pesquisaTaxa:0.089447, convWhats:0.025335, inv:{cap:39518.79, lem:3552.43, car:4144.15, out:0} },
+  { id:'L16KR', prod:'clinica', data:'17/03/2026', invest:55523.75, leads:1779, cplTrafico:33.190877, cplTotal:null, vendas:80, receita:239200, cac:694.046875, roas:4.308066, convTotal:0.044969, vendas1Dia:43, grupoLancTaxa:0.801574, pesquisaTaxa:0.242833, convWhats:0.056101, inv:{cap:49188.88, lem:670.91, car:3063.96, out:2600} },
+  { id:'L17KR', prod:'cardio', data:'13/04/2026', invest:50928.79, leads:1598, cplTrafico:34.321573, cplTotal:30.584431, vendas:32, receita:255680, cac:1591.524688, roas:5.020343, convTotal:0.020025, vendas1Dia:19, grupoLancTaxa:0.924906, pesquisaTaxa:0.222153, convWhats:0.021651, inv:{cap:48873.92, lem:301.58, car:1753.29, out:0} },
+  { id:'L18KR', prod:'clinica', data:'11/05/2026', invest:36521.56, leads:870, cplTrafico:46.790059, cplTotal:null, vendas:42, receita:125580, cac:869.560952, roas:3.438517, convTotal:0.048276, vendas1Dia:19, grupoLancTaxa:0.818391, pesquisaTaxa:0.364368, convWhats:0.058989, inv:{cap:31676.87, lem:997.77, car:1977.14, out:1869.78} },
+  { id:'L20KR', prod:'clinica', data:'13/07/2026', invest:51424.22, leads:1043, cplTrafico:49.127163, cplTotal:null, vendas:40, receita:119600, cac:1285.6055, roas:2.325752, convTotal:0.038351, vendas1Dia:16, grupoLancTaxa:0.785235, pesquisaTaxa:0.348035, convWhats:0.04884, inv:{cap:45884.77, lem:1346.11, car:2191.15, out:2002.19} },
+  { id:'L21KR', prod:'cardio', data:'10/08/2026', invest:61134.86, leads:1325, cplTrafico:48.352249, cplTotal:42.841917, vendas:23, receita:183885, cac:2658.037391, roas:3.007858, convTotal:0.017358, vendas1Dia:8, grupoLancTaxa:0.823396, pesquisaTaxa:0.16, convWhats:0.021082, inv:{cap:56765.54, lem:1040.79, car:2212.55, out:1115.98} },
 ];
 
 let charts = {};
@@ -237,11 +277,11 @@ function kpis(data) {
   const totalInvest  = data.reduce((a, d) => a + d.invest, 0);
   const totalReceita = data.reduce((a, d) => a + d.receita, 0);
   const totalVendas  = data.reduce((a, d) => a + d.vendas, 0);
-  const withCpl  = data.filter(d => d.cplTotal > 0);
+  const withCpl  = data.filter(d => d.cplTrafico > 0);
   const withCac  = data.filter(d => d.cac > 0);
   const withRoas = data.filter(d => d.roas);
   const withConv = data.filter(d => d.convTotal > 0);
-  const avgCpl  = withCpl.length  ? withCpl.reduce((a, d) => a + d.cplTotal, 0) / withCpl.length  : null;
+  const avgCpl  = withCpl.length  ? withCpl.reduce((a, d) => a + d.cplTrafico, 0) / withCpl.length  : null;
   const avgCac  = withCac.length  ? withCac.reduce((a, d) => a + d.cac, 0) / withCac.length        : null;
   const avgRoas = withRoas.length ? withRoas.reduce((a, d) => a + d.roas, 0) / withRoas.length     : null;
   const avgConv = withConv.length ? withConv.reduce((a, d) => a + d.convTotal, 0) / withConv.length: null;
@@ -251,7 +291,7 @@ function kpis(data) {
     { label: 'Receita bruta',       value: fmt(totalReceita, 'brl'),          sub: null },
     { label: 'Total de vendas',     value: fmt(totalVendas),                  sub: null },
     { label: 'Investimento total',  value: fmt(totalInvest, 'brl'),           sub: null },
-    { label: 'CPL médio',           value: avgCpl  ? fmt(avgCpl, 'brl')  : '—', sub: null },
+    { label: 'CPL tráfego médio',           value: avgCpl  ? fmt(avgCpl, 'brl')  : '—', sub: null },
     { label: 'CAC médio',           value: avgCac  ? fmt(avgCac, 'brl')  : '—', sub: null },
     { label: 'ROAS médio',          value: avgRoas ? avgRoas.toFixed(2) + 'x': '—', sub: null },
     { label: 'Conv. média',         value: avgConv ? fmt(avgConv, 'pct') : '—', sub: null },
@@ -277,9 +317,73 @@ function makeChart(id, type, labels, datasets, extraOpts = {}) {
   charts[id] = new Chart(ctx, { type, data: { labels, datasets }, options: opts });
 }
 
+// Detalhamento do investimento — só quando um lançamento está selecionado
+function investPorFase(data) {
+  const bloco = document.getElementById('investBloco');
+  if (data.length !== 1) { bloco.style.display = 'none'; return; }
+
+  const d = data[0];
+  const inv = d.inv || {cap:0, lem:0, car:0, out:0};
+  const total = d.invest || 0;
+  if (!total) { bloco.style.display = 'none'; return; }
+
+  const fases = [
+    { nome:'Captação', valor:inv.cap, cor:'#CDA04C',
+      desc:'Anúncios para captar leads antes do evento' },
+    { nome:'Lembrete', valor:inv.lem, cor:'#5b8aff',
+      desc:'Reforço para quem já era lead comparecer' },
+    { nome:'Carrinho', valor:inv.car, cor:'#7cc4a8',
+      desc:'Anúncios durante o período de vendas' },
+  ];
+  if (inv.out > 1) fases.push({ nome:'Não alocado', valor:inv.out, cor:'#4a5170',
+      desc:'Consta no total, mas sem fase registrada na planilha' });
+
+  const maior = Math.max(...fases.map(f=>f.valor), 1);
+
+  document.getElementById('investCard').innerHTML = `
+    <div class="inv-head">
+      <div>
+        <div class="inv-lanc">${d.id} · ${d.prod === 'cardio' ? 'Cardio' : 'Clínica'}</div>
+        <div class="inv-data">${d.data}</div>
+      </div>
+      <div class="inv-total">
+        <div class="inv-total-lbl">Investimento total</div>
+        <div class="inv-total-val">${fmt(total,'brl')}</div>
+      </div>
+    </div>
+    <div class="inv-barra">
+      ${fases.filter(f=>f.valor>0).map(f =>
+        `<div style="width:${f.valor/total*100}%;background:${f.cor}" title="${f.nome}: ${fmt(f.valor,'brl')}"></div>`
+      ).join('')}
+    </div>
+    <div class="inv-lista">
+      ${fases.map(f => `
+        <div class="inv-item">
+          <div class="inv-item-top">
+            <span class="inv-dot" style="background:${f.cor}"></span>
+            <span class="inv-nome">${f.nome}</span>
+            <span class="inv-pct">${total ? (f.valor/total*100).toFixed(1) : '0.0'}%</span>
+            <span class="inv-val">${fmt(f.valor,'brl')}</span>
+          </div>
+          <div class="inv-track"><div class="inv-fill" style="width:${f.valor/maior*100}%;background:${f.cor}"></div></div>
+          <div class="inv-desc">${f.desc}</div>
+        </div>`).join('')}
+    </div>
+    <div class="inv-rodape">
+      <div><span>Leads</span><strong>${fmt(d.leads)}</strong></div>
+      <div><span>CPL tráfego</span><strong>${d.cplTrafico ? fmt(d.cplTrafico,'brl') : '—'}</strong></div>
+      <div><span>Vendas</span><strong>${fmt(d.vendas)}</strong></div>
+      <div><span>CAC</span><strong>${d.cac ? fmt(d.cac,'brl') : '—'}</strong></div>
+      <div><span>Receita</span><strong>${fmt(d.receita,'brl')}</strong></div>
+      <div><span>ROAS</span><strong>${d.roas ? d.roas.toFixed(2)+'x' : '—'}</strong></div>
+    </div>`;
+  bloco.style.display = 'block';
+}
+
 function render() {
   const data = filtered();
   kpis(data);
+  investPorFase(data);
   const labels = data.map(d => d.id);
 
   // Receita
@@ -294,10 +398,10 @@ function render() {
   // Leads + CPL
   document.getElementById('legend2').innerHTML =
     `<span class="legend-item"><span class="legend-sq" style="background:rgba(169,139,255,0.7)"></span>Leads</span>
-     <span class="legend-item"><span class="legend-dot" style="background:#CDA04C"></span>CPL total (R$)</span>`;
+     <span class="legend-item"><span class="legend-dot" style="background:#CDA04C"></span>CPL tráfego (R$)</span>`;
   makeChart('chartLeads', 'bar', labels, [
     { label: 'Leads', data: data.map(d => d.leads), backgroundColor: 'rgba(169,139,255,0.7)', borderColor: '#a98bff', borderWidth: 1, borderRadius: 3, yAxisID: 'y' },
-    { label: 'CPL Total', data: data.map(d => d.cplTotal || 0), type: 'line', borderColor: '#CDA04C', backgroundColor: '#CDA04C', pointRadius: 4, yAxisID: 'y1', tension: 0.3 }
+    { label: 'CPL tráfego', data: data.map(d => d.cplTrafico || null), type: 'line', borderColor: '#CDA04C', backgroundColor: '#CDA04C', pointRadius: 4, yAxisID: 'y1', tension: 0.3, spanGaps: true }
   ], { scales: {
     y:  { position: 'left',  ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" } }, grid: { color: 'rgba(255,255,255,0.04)' } },
     y1: { position: 'right', ticks: { color: '#3a4060', font: { size: 10, family: "'DM Mono',monospace" }, callback: v => 'R$' + v }, grid: { drawOnChartArea: false } }
@@ -331,7 +435,7 @@ function render() {
     <td style="color:var(--muted)">${d.data}</td>
     <td>${fmt(d.leads)}</td>
     <td>${fmt(d.invest, 'brl')}</td>
-    <td>${fmt(d.cplTotal, 'brl')}</td>
+    <td>${fmt(d.cplTrafico, 'brl')}</td>
     <td>${fmt(d.vendas)}</td>
     <td style="color:var(--success)">${fmt(d.receita, 'brl')}</td>
     <td>${fmt(d.cac, 'brl')}</td>
