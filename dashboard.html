@@ -80,6 +80,20 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 /* SECTION LABEL */
 .section-label { font-size: 10px; font-family: var(--mono); color: var(--gold); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
 
+/* ── detalhe do lançamento ── */
+.det-sec { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 16px 20px; margin-bottom: 10px; }
+.det-sec-t { font-size: 10px; font-family: var(--mono); color: var(--gold);
+  letter-spacing: .1em; text-transform: uppercase; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.det-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 20px; }
+.det-item.largo { grid-column: 1 / -1; }
+.det-rot { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.det-val { font-size: 15px; font-weight: 500; color: var(--text); font-family: var(--mono);
+  line-height: 1.35; word-break: break-word; }
+.det-item.largo .det-val { font-size: 13px; font-family: var(--font); font-weight: 400; }
+.det-val.vazio { color: var(--hint); font-weight: 400; }
+
 /* ── investimento por fase ── */
 .inv-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2);
   padding: 20px 22px; margin-bottom: 20px; border-top: 2px solid var(--gold); }
@@ -160,6 +174,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
     <div class="inv-card" id="investCard"></div>
   </div>
 
+  <div id="detalheBloco" style="display:none">
+    <div class="section-label">Todos os dados do lançamento</div>
+    <div id="detalheCard"></div>
+  </div>
+
+  <div id="blocoComparativo">
   <div class="section-label">Gráficos</div>
   <div class="charts-grid">
     <div class="chart-card">
@@ -195,6 +215,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
       <tbody id="tabelaBody"></tbody>
     </table>
   </div>
+  </div><!-- /blocoComparativo -->
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -208,21 +229,21 @@ async function doLogout() { await sb.auth.signOut(); window.location.href = "ind
 
 // ── DATA ──────────────────────────────────────────────
 const ALL_DATA = [
-  { id:'L4KR', prod:'cardio', data:'17/02/2025', invest:0, leads:201, cplTrafico:0, cplTotal:0, vendas:37, receita:259000, cac:0, roas:null, convTotal:0.18408, vendas1Dia:24, grupoLancTaxa:0.920398, pesquisaTaxa:1, convWhats:0.2, inv:{cap:0, lem:0, car:0, out:0} },
-  { id:'L5KR', prod:'cardio', data:'10/03/2025', invest:29559.21, leads:1248, cplTrafico:25.618467, cplTotal:21.697692, vendas:56, receita:559440, cac:527.843036, roas:18.926081, convTotal:0.044872, vendas1Dia:37, grupoLancTaxa:1.06891, pesquisaTaxa:0.375, convWhats:0.041979, inv:{cap:27078.72, lem:2045.46, car:435.03, out:0} },
-  { id:'L6KR', prod:'cardio', data:'28/04/2025', invest:48451.01, leads:4417, cplTrafico:12.188373, cplTotal:9.583477, vendas:12, receita:119880, cac:4037.584167, roas:2.474252, convTotal:0.002717, vendas1Dia:null, grupoLancTaxa:0.908762, pesquisaTaxa:0.690967, convWhats:0.00299, inv:{cap:42330.22, lem:3329.2, car:2791.59, out:0} },
-  { id:'L7KR', prod:'clinica', data:'19/05/2025', invest:27213, leads:863, cplTrafico:36.375729, cplTotal:null, vendas:56, receita:279440, cac:485.946429, roas:10.268622, convTotal:0.06489, vendas1Dia:null, grupoLancTaxa:0.945539, pesquisaTaxa:0.771727, convWhats:0.068627, inv:{cap:23935.23, lem:2462.14, car:816.06, out:0} },
-  { id:'L8KR', prod:'cardio', data:'21/05/2025', invest:9570.45, leads:212, cplTrafico:37.043396, cplTotal:37.043396, vendas:2, receita:19980, cac:4785.225, roas:2.087676, convTotal:0.009434, vendas1Dia:null, grupoLancTaxa:0.622642, pesquisaTaxa:0.419811, convWhats:0.015152, inv:{cap:7853.2, lem:1157.01, car:560.24, out:0} },
-  { id:'L10KR', prod:'cardio', data:'23/07/2025', invest:28233.36, leads:1120, cplTrafico:26.603458, cplTotal:22.945482, vendas:23, receita:229770, cac:1227.537391, roas:8.138245, convTotal:0.020536, vendas1Dia:11, grupoLancTaxa:0.891964, pesquisaTaxa:0.813393, convWhats:0.023023, inv:{cap:25698.94, lem:1106.72, car:1427.7, out:0} },
-  { id:'L11KR', prod:'clinica', data:'08/09/2025', invest:30383, leads:793, cplTrafico:37.309507, cplTotal:null, vendas:51, receita:152490, cac:595.745098, roas:5.018925, convTotal:0.064313, vendas1Dia:null, grupoLancTaxa:0.856242, pesquisaTaxa:0.680958, convWhats:0.07511, inv:{cap:24960.06, lem:2293.42, car:3129.88, out:0} },
-  { id:'L13KR', prod:'cardio', data:'05/11/2025', invest:40346.04, leads:1115, cplTrafico:46.775153, cplTotal:31.505058, vendas:123, receita:613770, cac:328.016585, roas:15.212645, convTotal:0.110314, vendas1Dia:53, grupoLancTaxa:0.830493, pesquisaTaxa:0.251121, convWhats:0.132829, inv:{cap:35128.14, lem:1157.11, car:3881.01, out:179.78} },
-  { id:'L14KR', prod:'clinica', data:'12/01/2026', invest:39762.97, leads:1024, cplTrafico:46.052478, cplTotal:null, vendas:72, receita:215280, cac:552.263472, roas:5.414082, convTotal:0.070312, vendas1Dia:null, grupoLancTaxa:0.983398, pesquisaTaxa:0.06543, convWhats:0.0715, inv:{cap:37348.56, lem:700, car:1714.41, out:0} },
-  { id:'L15KR', prod:'cardio', data:'09/02/2026', invest:47215.37, leads:1554, cplTrafico:28.288325, cplTotal:25.430367, vendas:34, receita:285907, cac:1388.687353, roas:6.05538, convTotal:0.021879, vendas1Dia:15, grupoLancTaxa:0.863578, pesquisaTaxa:0.089447, convWhats:0.025335, inv:{cap:39518.79, lem:3552.43, car:4144.15, out:0} },
-  { id:'L16KR', prod:'clinica', data:'17/03/2026', invest:55523.75, leads:1779, cplTrafico:33.190877, cplTotal:null, vendas:80, receita:239200, cac:694.046875, roas:4.308066, convTotal:0.044969, vendas1Dia:43, grupoLancTaxa:0.801574, pesquisaTaxa:0.242833, convWhats:0.056101, inv:{cap:49188.88, lem:670.91, car:3063.96, out:2600} },
-  { id:'L17KR', prod:'cardio', data:'13/04/2026', invest:50928.79, leads:1598, cplTrafico:34.321573, cplTotal:30.584431, vendas:32, receita:255680, cac:1591.524688, roas:5.020343, convTotal:0.020025, vendas1Dia:19, grupoLancTaxa:0.924906, pesquisaTaxa:0.222153, convWhats:0.021651, inv:{cap:48873.92, lem:301.58, car:1753.29, out:0} },
-  { id:'L18KR', prod:'clinica', data:'11/05/2026', invest:36521.56, leads:870, cplTrafico:46.790059, cplTotal:null, vendas:42, receita:125580, cac:869.560952, roas:3.438517, convTotal:0.048276, vendas1Dia:19, grupoLancTaxa:0.818391, pesquisaTaxa:0.364368, convWhats:0.058989, inv:{cap:31676.87, lem:997.77, car:1977.14, out:1869.78} },
-  { id:'L20KR', prod:'clinica', data:'13/07/2026', invest:51424.22, leads:1043, cplTrafico:49.127163, cplTotal:null, vendas:40, receita:119600, cac:1285.6055, roas:2.325752, convTotal:0.038351, vendas1Dia:16, grupoLancTaxa:0.785235, pesquisaTaxa:0.348035, convWhats:0.04884, inv:{cap:45884.77, lem:1346.11, car:2191.15, out:2002.19} },
-  { id:'L21KR', prod:'cardio', data:'10/08/2026', invest:61134.86, leads:1325, cplTrafico:48.352249, cplTotal:42.841917, vendas:23, receita:183885, cac:2658.037391, roas:3.007858, convTotal:0.017358, vendas1Dia:8, grupoLancTaxa:0.823396, pesquisaTaxa:0.16, convWhats:0.021082, inv:{cap:56765.54, lem:1040.79, car:2212.55, out:1115.98} },
+  { id:"L4KR", prod:"cardio", data:"17/02/2025", evento:"SUPER AULA NO ZOOM + LANÇAMENTO DA PÓS-GRADUAÇÃO EM CARDIOLOGIA VETERINÁRIA PARA CÃES E GATOS", invest:0, ticket:"7.000 a vista ou 18 x de 550", leadsTraf:0, leadsQuente:0, leadsFrio:0, leadsOrg:201, leads:201, vendasOrg:37, cplTrafico:0, cplTotal:0, vendas:37, vendas1Dia:24, vAssinatura:27, vPagUnico:10, receita:259000, cac:0, roas:null, grupoLancQtd:185, grupoLancTaxa:0.920398, grupoVipQtd:45, grupoVipTaxa:0.223881, pesquisaQtd:201, pesquisaTaxa:1, convTotal:0.18408, convWhats:0.2, convGrupoVip:0.822222, pico:null, picoPct:null, precoAvista:7000, cpm:0, ctr:0, connectRate:null, convLP:null, inv:{cap:0, lem:0, car:0, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L5KR", prod:"cardio", data:"10/03/2025", evento:"Lançamento Oficial da Pós-Graduação Online em Cardiologia Veterinária para Cães e Gatos", invest:29559.21, ticket:"9.990 a vista ou 18 x de 785", leadsTraf:1057, leadsQuente:784, leadsFrio:272, leadsOrg:191, leads:1248, vendasOrg:null, cplTrafico:25.618467, cplTotal:21.697692, vendas:56, vendas1Dia:37, vAssinatura:30, vPagUnico:26, receita:559440, cac:527.843036, roas:18.926081, grupoLancQtd:1334, grupoLancTaxa:1.06891, grupoVipQtd:163, grupoVipTaxa:0.130609, pesquisaQtd:468, pesquisaTaxa:0.375, convTotal:0.044872, convWhats:0.041979, convGrupoVip:0.343558, pico:null, picoPct:null, precoAvista:9990, cpm:23.66, ctr:0.0077, connectRate:null, convLP:null, inv:{cap:27078.72, lem:2045.46, car:435.03, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L6KR", prod:"cardio", data:"28/04/2025", evento:"AULA PRÉ PÓS-GRADUAÇÃO EM CARDIOLOGIA VETERINÁRIA", invest:48451.01, ticket:"9.990 a vista ou 18 x de 785", leadsTraf:3473, leadsQuente:null, leadsFrio:null, leadsOrg:944, leads:4417, vendasOrg:null, cplTrafico:12.188373, cplTotal:9.583477, vendas:12, vendas1Dia:null, vAssinatura:7, vPagUnico:5, receita:119880, cac:4037.584167, roas:2.474252, grupoLancQtd:4014, grupoLancTaxa:0.908762, grupoVipQtd:146, grupoVipTaxa:0.033054, pesquisaQtd:3052, pesquisaTaxa:0.690967, convTotal:0.002717, convWhats:0.00299, convGrupoVip:0.082192, pico:null, picoPct:null, precoAvista:9990, cpm:13.53, ctr:0.0068, connectRate:null, convLP:null, inv:{cap:42330.22, lem:3329.2, car:2791.59, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L7KR", prod:"clinica", data:"19/05/2025", evento:"Lançamento Oficial da Pós-Graduação Online em Clínica e Emergências de Pequenos Animais – Instituto Kaleizu", invest:27213, ticket:"4.990 a vista ou 18 x de 399", leadsTraf:658, leadsQuente:658, leadsFrio:0, leadsOrg:205, leads:863, vendasOrg:null, cplTrafico:36.375729, cplTotal:null, vendas:56, vendas1Dia:null, vAssinatura:44, vPagUnico:12, receita:279440, cac:485.946429, roas:10.268622, grupoLancQtd:816, grupoLancTaxa:0.945539, grupoVipQtd:147, grupoVipTaxa:0.170336, pesquisaQtd:666, pesquisaTaxa:0.771727, convTotal:0.06489, convWhats:0.068627, convGrupoVip:0.380952, pico:null, picoPct:null, precoAvista:4990, cpm:16.95, ctr:0.006, connectRate:0.451, convLP:0.2012, inv:{cap:23935.23, lem:2462.14, car:816.06, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L8KR", prod:"cardio", data:"21/05/2025", evento:"Lançamento da Pós-Graduação em Cardiologia Veterinária para Cães e Gatos.", invest:9570.45, ticket:"9.990 a vista ou 18 x de 785", leadsTraf:212, leadsQuente:null, leadsFrio:null, leadsOrg:0, leads:212, vendasOrg:null, cplTrafico:37.043396, cplTotal:37.043396, vendas:2, vendas1Dia:null, vAssinatura:2, vPagUnico:0, receita:19980, cac:4785.225, roas:2.087676, grupoLancQtd:132, grupoLancTaxa:0.622642, grupoVipQtd:9, grupoVipTaxa:0.042453, pesquisaQtd:89, pesquisaTaxa:0.419811, convTotal:0.009434, convWhats:0.015152, convGrupoVip:0.222222, pico:null, picoPct:null, precoAvista:9990, cpm:21.12, ctr:0.0096, connectRate:null, convLP:null, inv:{cap:7853.2, lem:1157.01, car:560.24, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L10KR", prod:"cardio", data:"23/07/2025", evento:"Lançamento da Pós-Graduação em Cardiologia Veterinária para Cães e Gatos.", invest:28233.36, ticket:"9.990 a vista ou 18 x de 785", leadsTraf:966, leadsQuente:683, leadsFrio:283, leadsOrg:154, leads:1120, vendasOrg:null, cplTrafico:26.603458, cplTotal:22.945482, vendas:23, vendas1Dia:11, vAssinatura:13, vPagUnico:10, receita:229770, cac:1227.537391, roas:8.138245, grupoLancQtd:999, grupoLancTaxa:0.891964, grupoVipQtd:65, grupoVipTaxa:0.058036, pesquisaQtd:911, pesquisaTaxa:0.813393, convTotal:0.020536, convWhats:0.023023, convGrupoVip:0.353846, pico:null, picoPct:null, precoAvista:9990, cpm:18.03, ctr:0.0105, connectRate:null, convLP:null, inv:{cap:25698.94, lem:1106.72, car:1427.7, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L11KR", prod:"clinica", data:"08/09/2025", evento:"Lançamento da Pós-Graduação Online em Clínica e Emergências de Pequenos Animais – Instituto Kaleizu", invest:30383, ticket:"2.990 a vista ou 18 x de 299", leadsTraf:669, leadsQuente:331, leadsFrio:338, leadsOrg:124, leads:793, vendasOrg:null, cplTrafico:37.309507, cplTotal:null, vendas:51, vendas1Dia:null, vAssinatura:23, vPagUnico:28, receita:152490, cac:595.745098, roas:5.018925, grupoLancQtd:679, grupoLancTaxa:0.856242, grupoVipQtd:124, grupoVipTaxa:0.156368, pesquisaQtd:540, pesquisaTaxa:0.680958, convTotal:0.064313, convWhats:0.07511, convGrupoVip:0.41129, pico:null, picoPct:null, precoAvista:2990, cpm:23.41, ctr:0.0071, connectRate:0.5994, convLP:0.2012, inv:{cap:24960.06, lem:2293.42, car:3129.88, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L13KR", prod:"cardio", data:"05/11/2025", evento:"Super Black Friday da Pós em Cardiologia Veterinária", invest:40346.04, ticket:"1º dia 4.990 a vista ou 18 x de 388,83 2º dia 5.990 a vista ou 18 x de 444,39", leadsTraf:751, leadsQuente:435, leadsFrio:316, leadsOrg:364, leads:1115, vendasOrg:null, cplTrafico:46.775153, cplTotal:31.505058, vendas:123, vendas1Dia:53, vAssinatura:65, vPagUnico:58, receita:613770, cac:328.016585, roas:15.212645, grupoLancQtd:926, grupoLancTaxa:0.830493, grupoVipQtd:307, grupoVipTaxa:0.275336, pesquisaQtd:280, pesquisaTaxa:0.251121, convTotal:0.110314, convWhats:0.132829, convGrupoVip:0.400651, pico:null, picoPct:null, precoAvista:4990, cpm:26.24, ctr:0.0091, connectRate:0.546, convLP:0.1174, inv:{cap:35128.14, lem:1157.11, car:3881.01, dist:0, aque:0, cpls:0, out:179.78}, notas:{} },
+  { id:"L14KR", prod:"clinica", data:"12/01/2026", evento:"Lançamento - PÓS VET 360", invest:39762.97, ticket:"2.990 a vista ou 18 x de 299", leadsTraf:811, leadsQuente:356, leadsFrio:456, leadsOrg:213, leads:1024, vendasOrg:null, cplTrafico:46.052478, cplTotal:null, vendas:72, vendas1Dia:null, vAssinatura:29, vPagUnico:43, receita:215280, cac:552.263472, roas:5.414082, grupoLancQtd:1007, grupoLancTaxa:0.983398, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:67, pesquisaTaxa:0.06543, convTotal:0.070312, convWhats:0.0715, convGrupoVip:null, pico:90, picoPct:0.0879, precoAvista:2990, cpm:17.64, ctr:0.0058, connectRate:0.4956, convLP:0.1678, inv:{cap:37348.56, lem:700, car:1714.41, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L15KR", prod:"cardio", data:"09/02/2026", evento:"Lançamento da Pós-Graduação CardioPrime", invest:47215.37, ticket:"7.995 a vista ou 18 x de 599", leadsTraf:1397, leadsQuente:559, leadsFrio:838, leadsOrg:157, leads:1554, vendasOrg:null, cplTrafico:28.288325, cplTotal:25.430367, vendas:34, vendas1Dia:15, vAssinatura:24, vPagUnico:10, receita:285907, cac:1388.687353, roas:6.05538, grupoLancQtd:1342, grupoLancTaxa:0.863578, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:139, pesquisaTaxa:0.089447, convTotal:0.021879, convWhats:0.025335, convGrupoVip:null, pico:117, picoPct:0.0753, precoAvista:7995, cpm:22.03, ctr:0.012, connectRate:0.6208, convLP:0.0988, inv:{cap:39518.79, lem:3552.43, car:4144.15, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L16KR", prod:"clinica", data:"17/03/2026", evento:"Lançamento - PÓS VET 360", invest:55523.75, ticket:"2.990 a vista ou 18 x de 299", leadsTraf:1482, leadsQuente:806, leadsFrio:676, leadsOrg:297, leads:1779, vendasOrg:null, cplTrafico:33.190877, cplTotal:null, vendas:80, vendas1Dia:43, vAssinatura:28, vPagUnico:52, receita:239200, cac:694.046875, roas:4.308066, grupoLancQtd:1426, grupoLancTaxa:0.801574, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:432, pesquisaTaxa:0.242833, convTotal:0.044969, convWhats:0.056101, convGrupoVip:null, pico:139, picoPct:0.0735, precoAvista:2990, cpm:20.29, ctr:0.0093, connectRate:null, convLP:0.1118, inv:{cap:49188.88, lem:670.91, car:3063.96, aque:0, cpls:0, out:2600}, notas:{} },
+  { id:"L17KR", prod:"cardio", data:"13/04/2026", evento:"Lançamento da Pós-Graduação CardioPrime", invest:50928.79, ticket:"7.995 a vista ou 18 x de 599", leadsTraf:1424, leadsQuente:1108, leadsFrio:316, leadsOrg:174, leads:1598, vendasOrg:null, cplTrafico:34.321573, cplTotal:30.584431, vendas:32, vendas1Dia:19, vAssinatura:20, vPagUnico:12, receita:255680, cac:1591.524688, roas:5.020343, grupoLancQtd:1478, grupoLancTaxa:0.924906, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:355, pesquisaTaxa:0.222153, convTotal:0.020025, convWhats:0.021651, convGrupoVip:null, pico:149, picoPct:0.0932, precoAvista:7990, cpm:21.25, ctr:0.0107, connectRate:0.5953, convLP:0.1104, inv:{cap:48873.92, lem:301.58, car:1753.29, dist:0, aque:0, cpls:0, out:0}, notas:{} },
+  { id:"L18KR", prod:"clinica", data:"11/05/2026", evento:"Lançamento - PÓS VET 360", invest:36521.56, ticket:"2.990 a vista ou 18 x de 299", leadsTraf:677, leadsQuente:198, leadsFrio:144, leadsOrg:193, leads:870, vendasOrg:null, cplTrafico:46.790059, cplTotal:null, vendas:42, vendas1Dia:19, vAssinatura:12, vPagUnico:30, receita:125580, cac:869.560952, roas:3.438517, grupoLancQtd:712, grupoLancTaxa:0.818391, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:317, pesquisaTaxa:0.364368, convTotal:0.048276, convWhats:0.058989, convGrupoVip:null, pico:52, picoPct:0.0513, precoAvista:2990, cpm:13.12, ctr:0.0071, connectRate:0.5044, convLP:0.0809, inv:{cap:31676.87, lem:997.77, car:1977.14, aque:0, cpls:0, out:1869.78}, notas:{} },
+  { id:"L20KR", prod:"clinica", data:"13/07/2026", evento:"Lançamento - PÓS VET 360", invest:51424.22, ticket:"2.990 a vista ou 18 x de 299", leadsTraf:934, leadsQuente:598, leadsFrio:296, leadsOrg:109, leads:1043, vendasOrg:null, cplTrafico:49.127163, cplTotal:null, vendas:40, vendas1Dia:16, vAssinatura:14, vPagUnico:26, receita:119600, cac:1285.6055, roas:2.325752, grupoLancQtd:819, grupoLancTaxa:0.785235, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:363, pesquisaTaxa:0.348035, convTotal:0.038351, convWhats:0.04884, convGrupoVip:null, pico:114, picoPct:0.0513, precoAvista:2990, cpm:20, ctr:0.0061, connectRate:0.5846, convLP:0.1289, inv:{cap:45884.77, lem:1346.11, car:2191.15, aque:0, cpls:0, out:2002.19}, notas:{} },
+  { id:"L21KR", prod:"cardio", data:"10/08/2026", evento:"Lançamento da Pós-Graduação CardioPrime", invest:61134.86, ticket:"7.995 a vista ou 18 x de 599", leadsTraf:1174, leadsQuente:null, leadsFrio:null, leadsOrg:151, leads:1325, vendasOrg:null, cplTrafico:48.352249, cplTotal:42.841917, vendas:23, vendas1Dia:8, vAssinatura:16, vPagUnico:7, receita:183885, cac:2658.037391, roas:3.007858, grupoLancQtd:1091, grupoLancTaxa:0.823396, grupoVipQtd:null, grupoVipTaxa:null, pesquisaQtd:212, pesquisaTaxa:0.16, convTotal:0.017358, convWhats:0.021082, convGrupoVip:null, pico:116, picoPct:0.0753, precoAvista:7995, cpm:22.96, ctr:0.0081, connectRate:0.603, convLP:0.1041, inv:{cap:56765.54, lem:1040.79, car:2212.55, dist:0, aque:0, cpls:0, out:1115.98}, notas:{} },
 ];
 
 let charts = {};
@@ -317,33 +338,50 @@ function makeChart(id, type, labels, datasets, extraOpts = {}) {
   charts[id] = new Chart(ctx, { type, data: { labels, datasets }, options: opts });
 }
 
-// Detalhamento do investimento — só quando um lançamento está selecionado
-function investPorFase(data) {
-  const bloco = document.getElementById('investBloco');
-  if (data.length !== 1) { bloco.style.display = 'none'; return; }
+// ── Visão detalhada: aparece no lugar dos gráficos ao escolher um lançamento ──
+function detalhe(data) {
+  const comp = document.getElementById('blocoComparativo');
+  const inv  = document.getElementById('investBloco');
+  const det  = document.getElementById('detalheBloco');
 
+  if (data.length !== 1) {
+    comp.style.display = 'block';
+    inv.style.display = 'none';
+    det.style.display = 'none';
+    return;
+  }
+
+  comp.style.display = 'none';
   const d = data[0];
-  const inv = d.inv || {cap:0, lem:0, car:0, out:0};
+  renderInvest(d);
+  renderDetalhe(d);
+  inv.style.display = 'block';
+  det.style.display = 'block';
+}
+
+function renderInvest(d) {
+  const i = d.inv || {};
   const total = d.invest || 0;
-  if (!total) { bloco.style.display = 'none'; return; }
+  if (!total) { document.getElementById('investBloco').style.display = 'none'; return; }
 
   const fases = [
-    { nome:'Captação', valor:inv.cap, cor:'#CDA04C',
-      desc:'Anúncios para captar leads antes do evento' },
-    { nome:'Lembrete', valor:inv.lem, cor:'#5b8aff',
-      desc:'Reforço para quem já era lead comparecer' },
-    { nome:'Carrinho', valor:inv.car, cor:'#7cc4a8',
-      desc:'Anúncios durante o período de vendas' },
-  ];
-  if (inv.out > 1) fases.push({ nome:'Não alocado', valor:inv.out, cor:'#4a5170',
-      desc:'Consta no total, mas sem fase registrada na planilha' });
+    { nome:'Captação',    valor:i.cap||0,  cor:'#CDA04C', desc:'Anúncios para captar leads antes do evento' },
+    { nome:'Lembrete',    valor:i.lem||0,  cor:'#5b8aff', desc:'Reforço para o lead comparecer' },
+    { nome:'Carrinho',    valor:i.car||0,  cor:'#7cc4a8', desc:'Anúncios durante o período de vendas' },
+    { nome:'Distribuição',valor:i.dist||0, cor:'#a98bff', desc:'Distribuição de conteúdo' },
+    { nome:'Aquecimento', valor:i.aque||0, cor:'#f07ab0', desc:'Aquecimento de audiência' },
+    { nome:'CPLs',        valor:i.cpls||0, cor:'#4dc9f6', desc:'Aulas do lançamento' },
+  ].filter(f => f.valor > 0);
+
+  if ((i.out||0) > 1) fases.push({ nome:'Não alocado', valor:i.out, cor:'#4a5170',
+    desc:'Consta no total, sem fase registrada na planilha' });
 
   const maior = Math.max(...fases.map(f=>f.valor), 1);
 
   document.getElementById('investCard').innerHTML = `
     <div class="inv-head">
       <div>
-        <div class="inv-lanc">${d.id} · ${d.prod === 'cardio' ? 'Cardio' : 'Clínica'}</div>
+        <div class="inv-lanc">${d.id} · ${d.prod==='cardio'?'Cardio':'Clínica'}</div>
         <div class="inv-data">${d.data}</div>
       </div>
       <div class="inv-total">
@@ -351,39 +389,90 @@ function investPorFase(data) {
         <div class="inv-total-val">${fmt(total,'brl')}</div>
       </div>
     </div>
-    <div class="inv-barra">
-      ${fases.filter(f=>f.valor>0).map(f =>
-        `<div style="width:${f.valor/total*100}%;background:${f.cor}" title="${f.nome}: ${fmt(f.valor,'brl')}"></div>`
-      ).join('')}
+    <div class="inv-barra">${fases.map(f=>
+      `<div style="width:${f.valor/total*100}%;background:${f.cor}" title="${f.nome}: ${fmt(f.valor,'brl')}"></div>`).join('')}
     </div>
-    <div class="inv-lista">
-      ${fases.map(f => `
-        <div class="inv-item">
-          <div class="inv-item-top">
-            <span class="inv-dot" style="background:${f.cor}"></span>
-            <span class="inv-nome">${f.nome}</span>
-            <span class="inv-pct">${total ? (f.valor/total*100).toFixed(1) : '0.0'}%</span>
-            <span class="inv-val">${fmt(f.valor,'brl')}</span>
-          </div>
-          <div class="inv-track"><div class="inv-fill" style="width:${f.valor/maior*100}%;background:${f.cor}"></div></div>
-          <div class="inv-desc">${f.desc}</div>
-        </div>`).join('')}
-    </div>
-    <div class="inv-rodape">
-      <div><span>Leads</span><strong>${fmt(d.leads)}</strong></div>
-      <div><span>CPL tráfego</span><strong>${d.cplTrafico ? fmt(d.cplTrafico,'brl') : '—'}</strong></div>
-      <div><span>Vendas</span><strong>${fmt(d.vendas)}</strong></div>
-      <div><span>CAC</span><strong>${d.cac ? fmt(d.cac,'brl') : '—'}</strong></div>
-      <div><span>Receita</span><strong>${fmt(d.receita,'brl')}</strong></div>
-      <div><span>ROAS</span><strong>${d.roas ? d.roas.toFixed(2)+'x' : '—'}</strong></div>
+    <div class="inv-lista">${fases.map(f=>`
+      <div class="inv-item">
+        <div class="inv-item-top">
+          <span class="inv-dot" style="background:${f.cor}"></span>
+          <span class="inv-nome">${f.nome}</span>
+          <span class="inv-pct">${(f.valor/total*100).toFixed(1)}%</span>
+          <span class="inv-val">${fmt(f.valor,'brl')}</span>
+        </div>
+        <div class="inv-track"><div class="inv-fill" style="width:${f.valor/maior*100}%;background:${f.cor}"></div></div>
+        <div class="inv-desc">${f.desc}</div>
+      </div>`).join('')}
     </div>`;
-  bloco.style.display = 'block';
+}
+
+function renderDetalhe(d) {
+  const n   = v => v==null ? '—' : Math.round(v).toLocaleString('pt-BR');
+  const brl = v => v==null ? '—' : fmt(v,'brl');
+  const pct = v => v==null ? '—' : (v*100).toFixed(2)+'%';
+  const dec = (v,c=2) => v==null ? '—' : v.toFixed(c);
+
+  const secoes = [
+    ['Identificação', [
+      ['Lançamento', d.id], ['Produto', d.prod==='cardio'?'Cardio':'Clínica'],
+      ['Data', d.data], ['Evento', d.evento, 'largo'],
+      ['Ticket', d.ticket, 'largo'],
+      ['Preço à vista usado no cálculo', brl(d.precoAvista)],
+    ]],
+    ['Leads', [
+      ['Total', n(d.leads)], ['Tráfego pago', n(d.leadsTraf)], ['Orgânicos', n(d.leadsOrg)],
+      ['Quente', n(d.leadsQuente)], ['Frio', n(d.leadsFrio)],
+      ['CPL tráfego', brl(d.cplTrafico)], ['CPL total', brl(d.cplTotal)],
+    ]],
+    ['Investimento', [
+      ['Total', brl(d.invest)],
+      ['Captação', brl(d.inv?.cap)], ['Lembrete', brl(d.inv?.lem)],
+      ['Carrinho', brl(d.inv?.car)],
+      ['Não alocado', (d.inv?.out||0) > 1 ? brl(d.inv.out) : '—'],
+    ]],
+    ['Vendas', [
+      ['Total', n(d.vendas)], ['No 1º dia', n(d.vendas1Dia)],
+      ['Assinatura', n(d.vAssinatura)], ['Pagamento único', n(d.vPagUnico)],
+      ['Orgânicas', n(d.vendasOrg)],
+    ]],
+    ['Resultado', [
+      ['Receita bruta', brl(d.receita)], ['CAC', brl(d.cac)],
+      ['ROAS', d.roas==null?'—':dec(d.roas)+'x'],
+      ['Lucro sobre mídia', d.receita!=null&&d.invest!=null ? brl(d.receita-d.invest) : '—'],
+    ]],
+    ['Conversões', [
+      ['Conversão total', pct(d.convTotal)], ['Conversão WhatsApp', pct(d.convWhats)],
+      ['Conversão grupo VIP', pct(d.convGrupoVip)],
+    ]],
+    ['Engajamento', [
+      ['Grupo do lançamento', n(d.grupoLancQtd)], ['Taxa de entrada', pct(d.grupoLancTaxa)],
+      ['Grupo VIP', n(d.grupoVipQtd)], ['Taxa grupo VIP', pct(d.grupoVipTaxa)],
+      ['Respostas da pesquisa', n(d.pesquisaQtd)], ['Taxa de resposta', pct(d.pesquisaTaxa)],
+      ['Pico de audiência', n(d.pico)], ['Pico sobre leads', pct(d.picoPct)],
+    ]],
+    ['Tráfego Meta', [
+      ['CPM', brl(d.cpm)], ['CTR', pct(d.ctr)],
+      ['Connect rate', pct(d.connectRate)], ['Conversão da LP', pct(d.convLP)],
+    ]],
+  ];
+
+  document.getElementById('detalheCard').innerHTML = secoes.map(([titulo, itens]) => `
+    <div class="det-sec">
+      <div class="det-sec-t">${titulo}</div>
+      <div class="det-grid">${itens.map(([rot, val, cls]) => `
+        <div class="det-item ${cls||''}">
+          <div class="det-rot">${rot}</div>
+          <div class="det-val ${val==='—'?'vazio':''}">${val==null?'—':val}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function render() {
   const data = filtered();
   kpis(data);
-  investPorFase(data);
+  detalhe(data);
+  if (data.length === 1) return;
   const labels = data.map(d => d.id);
 
   // Receita
