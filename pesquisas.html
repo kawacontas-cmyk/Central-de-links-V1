@@ -37,17 +37,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .lanc-sec-t span{background:var(--surface);color:var(--muted);border-radius:99px;padding:1px 8px;letter-spacing:0}
 .lanc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
-.lanc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);
-  padding:16px 18px;border-top:2px solid var(--gold);transition:border-color .15s}
-.lanc-card:hover{border-color:var(--gold)}
-.lanc-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.lanc-nome{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:0;
+
+.lanc-card{position:relative;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px 18px;overflow:hidden;transition:border-color .15s,transform .15s}
+.lanc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c)}
+.lanc-card::after{content:'';position:absolute;top:-40px;right:-40px;width:110px;height:110px;
+  border-radius:50%;background:var(--c);opacity:.07;pointer-events:none}
+.lanc-card:hover{border-color:var(--c);transform:translateY(-2px)}
+
+.lanc-top{margin-bottom:12px}
+.lanc-nome{font-size:13px;font-weight:500;color:var(--text);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lanc-num{font-size:26px;font-weight:500;color:var(--gold-light);line-height:1;letter-spacing:-.5px}
+.lanc-num{font-size:27px;font-weight:500;color:var(--c);line-height:1;letter-spacing:-.5px}
 .lanc-lbl{font-size:11px;color:var(--hint);font-family:var(--mono);margin-top:3px;margin-bottom:14px}
+
 .lanc-acoes{display:flex;gap:6px}
-.lanc-acoes .btn{flex:1;justify-content:center}
-.btn-sm{padding:6px 10px;font-size:11px}
+.btn-lanc{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  padding:7px 8px;border-radius:var(--r);font-size:11px;font-family:var(--font);
+  cursor:pointer;transition:all .15s;background:transparent;
+  border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.btn-lanc:hover{border-color:var(--c);color:var(--text)}
+.btn-lanc.primario{border-color:rgba(var(--crgb),.45);color:var(--c)}
+.btn-lanc.primario:hover{background:rgba(var(--crgb),.13);border-color:var(--c)}
+
+.check-line{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text);
+  cursor:pointer;margin-bottom:4px}
+.check-line input{margin-top:2px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+.check-hint{font-size:11px;color:var(--hint);margin:0 0 12px 22px}
 .check-line{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text);
   cursor:pointer;margin-bottom:4px}
 .check-line input{margin-top:2px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
@@ -216,6 +232,21 @@ async function init() {
   }
 }
 
+// Paleta que se repete a cada 8 cards, para diferenciar as pesquisas
+const CORES_LANC = [
+  {hex:'#CDA04C', rgb:'205,160,76'},  {hex:'#7cc4a8', rgb:'124,196,168'},
+  {hex:'#5b8aff', rgb:'91,138,255'},  {hex:'#a98bff', rgb:'169,139,255'},
+  {hex:'#f07ab0', rgb:'240,122,176'}, {hex:'#4dc9f6', rgb:'77,201,246'},
+  {hex:'#5fcd8a', rgb:'95,205,138'},  {hex:'#ffb94a', rgb:'255,185,74'}
+];
+
+// Cor fixa por nome: o mesmo lançamento mantém a cor mesmo mudando de posição
+function corDoLancamento(id) {
+  let n = 0;
+  for (let i=0; i<id.length; i++) n = (n*31 + id.charCodeAt(i)) >>> 0;
+  return CORES_LANC[n % CORES_LANC.length];
+}
+
 function renderLancamentos() {
   const total = sheets.reduce((s,x)=>s+x.total, 0);
   document.getElementById('topbarCount').textContent = total.toLocaleString('pt-BR') + ' respostas';
@@ -223,19 +254,22 @@ function renderLancamentos() {
   const cap = sheets.filter(s=>s.tipo==='Captação');
   const alu = sheets.filter(s=>s.tipo!=='Captação');
 
-  const card = s => `
-    <div class="lanc-card">
+  const card = s => {
+    const cor = corDoLancamento(s.id);
+    const esc = s.id.replace(/'/g,"\\'");
+    return `
+    <div class="lanc-card" style="--c:${cor.hex};--crgb:${cor.rgb}">
       <div class="lanc-top">
         <div class="lanc-nome" title="${s.id}">${s.id}</div>
-        <span class="badge badge-${s.tipo==='Captação'?'cap':'alu'}">${s.tipo}</span>
       </div>
       <div class="lanc-num">${s.total.toLocaleString('pt-BR')}</div>
       <div class="lanc-lbl">respostas</div>
       <div class="lanc-acoes">
-        <button class="btn btn-primary btn-sm" onclick="exportCSV('${s.id.replace(/'/g,"\\'")}')">&#8595; Exportar</button>
-        <button class="btn btn-ghost btn-sm" onclick="openImportCSV('${s.id.replace(/'/g,"\\'")}')">&#8593; Importar</button>
+        <button class="btn-lanc primario" onclick="exportCSV('${esc}')">&#8595; Exportar</button>
+        <button class="btn-lanc" onclick="openImportCSV('${esc}')">&#8593; Importar</button>
       </div>
     </div>`;
+  };
 
   const grupo = (titulo, lista) => !lista.length ? '' : `
     <div class="lanc-sec">
@@ -250,7 +284,7 @@ function renderLancamentos() {
         <div class="page-sub">${sheets.length} lançamentos · ${total.toLocaleString('pt-BR')} respostas no total</div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="openNewLancamento()">+ Novo lançamento</button>
+        <button class="btn btn-primary" onclick="openImportCSV()">+ Novo lançamento</button>
       </div>
     </div>
     ${sheets.length ? grupo('Captação', cap) + grupo('Alunos', alu)
